@@ -65,7 +65,7 @@ const AdminsMemberManagementPage = () => {
         if (member.isManager) {
             toast.error('This member is already the manager');
             return;
-        }  
+        }
 
         if (!confirm(`Make ${member.name} the manager? Current manager will lose access.`)) {
             return;
@@ -84,6 +84,27 @@ const AdminsMemberManagementPage = () => {
             }
         } catch (error) {
             toast.error('Failed to update manager');
+        }
+    };
+
+    const handleRemoveManager = async (member) => {
+        if (!confirm(`Remove ${member.name} from manager role?`)) {
+            return;
+        }
+
+        try {
+            const data = await fetchAPI(`/api/admin/remove-manager/${member._id}`, {
+                method: 'PATCH',
+            });
+
+            if (data.success) {
+                toast.success(`${member.name} is no longer the manager`);
+                fetchMembers();
+            } else {
+                toast.error(data.message || 'Failed');
+            }
+        } catch (error) {
+            toast.error('Failed to remove manager');
         }
     };
 
@@ -231,19 +252,25 @@ const AdminsMemberManagementPage = () => {
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="flex items-center gap-1">
-                                            {/* Make Manager Button */}
+                                            {/* Manager Button */}
                                             {member.role !== 'admin' && (
-                                                <button
-                                                    onClick={() => handleMakeManager(member)}
-                                                    className={`p-1.5 rounded-lg transition-colors ${
-                                                        member.isManager 
-                                                            ? 'bg-purple-100 text-purple-600' 
-                                                            : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600'
-                                                    }`}
-                                                    title={member.isManager ? 'Current Manager' : 'Make Manager'}
-                                                >
-                                                    <Shield className="size-4" fill={member.isManager ? 'currentColor' : 'none'} />
-                                                </button>
+                                                member.isManager ? (
+                                                    <button
+                                                        onClick={() => handleRemoveManager(member)}
+                                                        className="p-1.5 rounded-lg bg-purple-100 text-purple-600 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                        title="Remove Manager"
+                                                    >
+                                                        <Shield className="size-4" fill="currentColor" />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleMakeManager(member)}
+                                                        className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
+                                                        title="Make Manager"
+                                                    >
+                                                        <Shield className="size-4" />
+                                                    </button>
+                                                )
                                             )}
                                             {/* Block/Unblock Button */}
                                             <button
