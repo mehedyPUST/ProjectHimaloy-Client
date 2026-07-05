@@ -65,7 +65,7 @@ const AdminsMemberManagementPage = () => {
         if (member.isManager) {
             toast.error('This member is already the manager');
             return;
-        }
+        }  
 
         if (!confirm(`Make ${member.name} the manager? Current manager will lose access.`)) {
             return;
