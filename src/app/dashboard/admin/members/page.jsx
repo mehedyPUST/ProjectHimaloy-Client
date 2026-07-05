@@ -9,13 +9,11 @@ import {
     Mail,
     Phone,
     Calendar,
-    Wallet,
-    HandCoins,
     Shield,
     CheckCircle2,
     XCircle,
-    Edit3,
     UserX,
+    UserCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,7 +24,6 @@ const AdminsMemberManagementPage = () => {
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    // Fetch members
     useEffect(() => {
         fetchMembers();
     }, []);
@@ -44,17 +41,17 @@ const AdminsMemberManagementPage = () => {
         }
     };
 
-    const handleToggleStatus = async (member) => {
-        const newStatus = member.active ? false : true;
+    const handleToggleBlock = async (member) => {
+        const newBlocked = !member.isBlocked;
 
         try {
             const data = await fetchAPI(`/api/users/${member._id}`, {
                 method: 'PATCH',
-                body: JSON.stringify({ active: newStatus }),
+                body: JSON.stringify({ isBlocked: newBlocked }),
             });
 
             if (data.success) {
-                toast.success(`Member ${newStatus ? 'unblocked' : 'blocked'} successfully!`);
+                toast.success(`Member ${newBlocked ? 'blocked' : 'unblocked'} successfully!`);
                 fetchMembers();
             } else {
                 toast.error(data.message || 'Failed to update member');
@@ -71,13 +68,13 @@ const AdminsMemberManagementPage = () => {
             (member.phone || '').includes(searchTerm);
         const matchesRole = roleFilter === 'all' || member.role === roleFilter;
         const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'active' && member.active) ||
-            (statusFilter === 'blocked' && !member.active);
+            (statusFilter === 'active' && !member.isBlocked) ||
+            (statusFilter === 'blocked' && member.isBlocked);
         return matchesSearch && matchesRole && matchesStatus;
     });
 
-    const activeCount = members.filter(m => m.active).length;
-    const blockedCount = members.filter(m => !m.active).length;
+    const activeCount = members.filter(m => !m.isBlocked).length;
+    const blockedCount = members.filter(m => m.isBlocked).length;
     const managerCount = members.filter(m => m.role === 'manager').length;
 
     if (loading) {
@@ -186,15 +183,16 @@ const AdminsMemberManagementPage = () => {
                                         </div>
                                     </td>
                                     <td className="py-3 px-4 hidden lg:table-cell">
-                                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${member.role === 'admin' ? 'bg-red-100 text-red-700' :
-                                                member.role === 'manager' ? 'bg-purple-100 text-purple-700' :
-                                                    'bg-blue-100 text-blue-700'
-                                            }`}>
+                                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                            member.role === 'admin' ? 'bg-red-100 text-red-700' :
+                                            member.role === 'manager' ? 'bg-purple-100 text-purple-700' :
+                                            'bg-blue-100 text-blue-700'
+                                        }`}>
                                             <Shield className="size-3" />{member.role || 'member'}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4">
-                                        {member.active ? (
+                                        {!member.isBlocked ? (
                                             <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                                                 <CheckCircle2 className="size-3" />Active
                                             </span>
@@ -205,15 +203,21 @@ const AdminsMemberManagementPage = () => {
                                         )}
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => handleToggleStatus(member)}
-                                                className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                                                title={member.active ? 'Block Member' : 'Unblock Member'}
-                                            >
-                                                <UserX className={`size-4 ${member.active ? 'text-red-500' : 'text-green-500'}`} />
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => handleToggleBlock(member)}
+                                            className={`p-1.5 rounded-lg transition-colors ${
+                                                member.isBlocked 
+                                                    ? 'hover:bg-green-50 text-green-500' 
+                                                    : 'hover:bg-red-50 text-red-500'
+                                            }`}
+                                            title={member.isBlocked ? 'Unblock Member' : 'Block Member'}
+                                        >
+                                            {member.isBlocked ? (
+                                                <UserCheck className="size-4" />
+                                            ) : (
+                                                <UserX className="size-4" />
+                                            )}
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
