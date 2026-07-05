@@ -1,0 +1,418 @@
+// client/src/app/dashboard/manager/deposits/page.jsx
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSession } from '@/lib/auth-client';
+import { fetchAPI } from '@/lib/api';
+import {
+    Wallet,
+    Search,
+    CheckCircle2,
+    XCircle,
+    Clock,
+    Calendar,
+    Check,
+    X,
+    Eye,
+    User,
+    Phone,
+    Hash,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const DepositsPageForManager = () => {
+    const { data: session } = useSession();
+    const user = session?.user;
+
+    const [loading, setLoading] = useState(true);
+    const [deposits, setDeposits] = useState([]);
+    const [dueMembers, setDueMembers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [monthFilter, setMonthFilter] = useState('current');
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    // Fetch deposits
+    useEffect(() => {
+        fetchDeposits();
+        fetchDueMembers();
+    }, []);
+
+    const fetchDeposits = async () => {
+        try {
+            const data = await fetchAPI('/api/deposits');
+            if (data.success) {
+                setDeposits(data.deposits || []);
+            }
+        } catch (error) {
+            console.error('Error fetching deposits:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchDueMembers = async () => {
+        try {
+            const data = await fetchAPI('/api/deposits/due');
+            if (data.success) {
+                setDueMembers(data.dueMembers || []);
+            }
+        } catch (error) {
+            console.error('Error fetching due members:', error);
+        }
+    };
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    const filteredDeposits = deposits.filter(dep => {
+        const matchesSearch =
+            (dep.member_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (dep.phone || '').includes(searchTerm) ||
+            (dep.paid_through || dep.method || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'all' || dep.status === statusFilter;
+        const matchesMonth = monthFilter === 'all' || dep.month === currentMonth;
+        return matchesSearch && matchesStatus && matchesMonth;
+    });
+
+    const pendingCount = deposits.filter(c => c.status === 'pending').length;
+    const confirmedCount = deposits.filter(c => c.status === 'confirmed').length;
+
+    const handleConfirm = async (id) => {
+        const managerId = user?._id || user?.id;
+
+        try {
+            const data = await fetchAPI(`/api/deposits/${id}/confirm`, {
+                method: 'PATCH',
+                body: JSON.stringify({ managerId }),
+            });
+
+            if (data.success) {
+                toast.success('Deposit confirmed!');
+                fetchDeposits();
+                if (isDetailModalOpen) setIsDetailModalOpen(false);
+            } else {
+                toast.error(data.message || 'Failed to confirm');
+            }
+        } catch (error) {
+            toast.error('Failed to confirm deposit');
+        }
+    };
+
+    const handleReject = async (id) => {
+        const managerId = user?._id || user?.id;
+
+        try {
+            const data = await fetchAPI(`/api/deposits/${id}/confirm`, {
+                method: 'PATCH',
+                body: JSON.stringify({ managerId, status: 'rejected' }),
+            });
+
+            if (data.success) {
+                toast.error('Deposit rejected');
+                fetchDeposits();
+                if (isDetailModalOpen) setIsDetailModalOpen(false);
+            }
+        } catch (error) {
+            toast.error('Failed to reject deposit');
+        }
+    };
+
+    const openDetailModal = (request) => {
+        setSelectedRequest(request);
+        setIsDetailModalOpen(true);
+    };
+
+    const getMonthName = (monthStr) => {
+        if (!monthStr) return '';
+        const [year, month] = monthStr.split('-');
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${monthNames[parseInt(month) - 1]} ${year}`;
+    };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading deposits...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-6">
+            {/* Page Title */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Deposits</h1>
+                    <p className="text-gray-500 mt-1">Review and confirm member deposits</p>
+                </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                    <p className="text-xs text-gray-500">Total Submissions</p>
+                    <p className="text-2xl font-bold text-gray-900">{deposits.length}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-yellow-200 p-4">
+                    <div className="flex items-center gap-2">
+                        <Clock className="size-4 text-yellow-600" />
+                        <p className="text-xs text-gray-500">Pending</p>
+                    </div>
+                    <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-green-200 p-4">
+                    <div className="flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-green-600" />
+                        <p className="text-xs text-gray-500">Confirmed</p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">{confirmedCount}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-red-200 p-4">
+                    <div className="flex items-center gap-2">
+                        <XCircle className="size-4 text-red-600" />
+                        <p className="text-xs text-gray-500">Due</p>
+                    </div>
+                    <p className="text-2xl font-bold text-red-600">{dueMembers.length}</p>
+                </div>
+            </div>
+
+            {/* Search & Filters */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex flex-col md:flex-row gap-3">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, phone, method..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                        />
+                    </div>
+
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                    </select>
+
+                    <select
+                        value={monthFilter}
+                        onChange={(e) => setMonthFilter(e.target.value)}
+                        className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white"
+                    >
+                        <option value="current">Current Month</option>
+                        <option value="all">All Months</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Due Members */}
+            {dueMembers.length > 0 && statusFilter === 'all' && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <XCircle className="size-5 text-red-600" />
+                        <h3 className="font-semibold text-red-800">Due Deposits ({dueMembers.length})</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {dueMembers.map(member => (
+                            <span key={member._id} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-red-200 rounded-lg text-sm">
+                                <span className="font-medium text-gray-900">{member.name}</span>
+                                <span className="text-red-500">•</span>
+                                <span className="text-red-500">{member.month}</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Deposits Table */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Member</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Month</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Amount</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 hidden md:table-cell">Date</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 hidden lg:table-cell">Method</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Status</th>
+                                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredDeposits.map((dep, index) => (
+                                <tr key={dep._id || index} className={`hover:bg-gray-50 transition-colors ${dep.status === 'pending' ? 'bg-yellow-50/30' : ''}`}>
+                                    <td className="py-3 px-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">
+                                                {(dep.member_name || '?').charAt(0)}
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900">{dep.member_name || 'Unknown'}</span>
+                                        </div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                                            <Calendar className="size-3" />
+                                            {getMonthName(dep.month)}
+                                        </div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        <span className="text-sm font-semibold text-gray-900">৳{dep.amount.toLocaleString()}</span>
+                                    </td>
+                                    <td className="py-3 px-4 hidden md:table-cell text-sm text-gray-500">
+                                        {dep.date || new Date(dep.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="py-3 px-4 hidden lg:table-cell">
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                                            {dep.paid_through || dep.method || '-'}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        {dep.status === 'confirmed' ? (
+                                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                                <CheckCircle2 className="size-3" /> Confirmed
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                                                <Clock className="size-3" /> Pending
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => openDetailModal(dep)}
+                                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                                                title="View Details"
+                                            >
+                                                <Eye className="size-4 text-gray-500" />
+                                            </button>
+                                            {dep.status === 'pending' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleConfirm(dep._id)}
+                                                        className="p-1.5 hover:bg-green-50 rounded-lg transition-colors"
+                                                        title="Confirm"
+                                                    >
+                                                        <Check className="size-4 text-green-600" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleReject(dep._id)}
+                                                        className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Reject"
+                                                    >
+                                                        <X className="size-4 text-red-500" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {filteredDeposits.length === 0 && (
+                    <div className="p-12 text-center">
+                        <Wallet className="size-12 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900">No deposits found</h3>
+                        <p className="text-gray-500 mt-1">Try adjusting your filters</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Detail Modal */}
+            {isDetailModalOpen && selectedRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setIsDetailModalOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Request Details</h3>
+                            <button onClick={() => setIsDetailModalOpen(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                                <X className="size-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-lg font-bold text-purple-600">
+                                    {(selectedRequest.member_name || '?').charAt(0)}
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-900">{selectedRequest.member_name || 'Unknown'}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p className="text-xs text-gray-500">Month</p>
+                                    <p className="font-medium">{getMonthName(selectedRequest.month)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Amount</p>
+                                    <p className="font-medium text-lg">৳{selectedRequest.amount.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Date</p>
+                                    <p className="font-medium">
+                                        {selectedRequest.date || new Date(selectedRequest.created_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Method</p>
+                                    <p className="font-medium">{selectedRequest.paid_through || selectedRequest.method || '-'}</p>
+                                </div>
+                                {selectedRequest.transaction_id && selectedRequest.transaction_id !== '-' && (
+                                    <div className="col-span-2">
+                                        <p className="text-xs text-gray-500">Transaction ID</p>
+                                        <p className="font-medium flex items-center gap-1">
+                                            <Hash className="size-3" />
+                                            {selectedRequest.transaction_id}
+                                        </p>
+                                    </div>
+                                )}
+                                {selectedRequest.note && (
+                                    <div className="col-span-2">
+                                        <p className="text-xs text-gray-500">Note</p>
+                                        <p className="font-medium">{selectedRequest.note}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedRequest.status === 'pending' && (
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => handleConfirm(selectedRequest._id)}
+                                        className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Check className="size-4" /> Confirm
+                                    </button>
+                                    <button
+                                        onClick={() => handleReject(selectedRequest._id)}
+                                        className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <X className="size-4" /> Reject
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default DepositsPageForManager;
