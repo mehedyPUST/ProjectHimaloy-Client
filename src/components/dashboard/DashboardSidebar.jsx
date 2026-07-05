@@ -46,7 +46,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
     const memberLinks = [
         { icon: LayoutDashboard, href: '/dashboard/member', label: "Dashboard" },
         { icon: Wallet, href: '/dashboard/member/deposits', label: "Deposits" },
-        { icon: HandCoins, href: '/dashboard/member/loans', label: "My Loans" },
+        { icon: HandCoins, href: '/dashboard/member/my-loans', label: "My Loans" },
         { icon: Vote, href: '/dashboard/member/votings', label: "Voting" },
         { icon: Clock, href: '/dashboard/member/history', label: "History" },
         { icon: User, href: '/dashboard/member/profile', label: "Profile" },
@@ -62,7 +62,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
         { icon: Bell, href: '/dashboard/manager/meetings', label: "Meetings" },
         { section: 'Personal' },
         { icon: Wallet, href: '/dashboard/member/deposits', label: "My Deposits" },
-        { icon: HandCoins, href: '/dashboard/member/loans', label: "My Loans" },
+        { icon: HandCoins, href: '/dashboard/member/my-loans', label: "My Loans" },
         { icon: Vote, href: '/dashboard/member/votings', label: "Vote" },
         { icon: Clock, href: '/dashboard/member/history', label: "My History" },
         { icon: User, href: '/dashboard/manager/profile', label: "Profile" },
