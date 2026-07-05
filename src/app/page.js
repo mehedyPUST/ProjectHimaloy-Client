@@ -173,7 +173,7 @@ export default function Home() {
                         </span>
                         {txn.status && (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${txn.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                              txn.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                            txn.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {txn.status}
                           </span>
@@ -209,7 +209,7 @@ export default function Home() {
   );
 }
 
-// Helper: Time ago
+// Helper: Time agoo
 function getTimeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000);
   if (seconds < 60) return 'just now';
@@ -221,3 +221,5 @@ function getTimeAgo(date) {
   if (days < 7) return `${days}d ago`;
   return '';
 }
+
+
