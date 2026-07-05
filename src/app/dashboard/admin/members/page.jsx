@@ -32,7 +32,13 @@ const AdminsMemberManagementPage = () => {
         try {
             const data = await fetchAPI('/api/users');
             if (data.success) {
-                setMembers(data.users || []);
+                // ✅ Convert string boolean to actual boolean
+                const fixedMembers = (data.users || []).map(member => ({
+                    ...member,
+                    isManager: member.isManager === true || member.isManager === "true",
+                    isBlocked: member.isBlocked === true || member.isBlocked === "true",
+                }));
+                setMembers(fixedMembers);
             }
         } catch (error) {
             console.error('Error fetching members:', error);
@@ -255,33 +261,27 @@ const AdminsMemberManagementPage = () => {
                                             {/* Manager Button */}
                                             {member.role !== 'admin' && (
                                                 member.isManager ? (
-                                                    <button
-                                                        onClick={() => handleRemoveManager(member)}
+                                                    <button onClick={() => handleRemoveManager(member)}
                                                         className="p-1.5 rounded-lg bg-purple-100 text-purple-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                                        title="Remove Manager"
-                                                    >
+                                                        title="Remove Manager">
                                                         <Shield className="size-4" fill="currentColor" />
                                                     </button>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => handleMakeManager(member)}
+                                                    <button onClick={() => handleMakeManager(member)}
                                                         className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
-                                                        title="Make Manager"
-                                                    >
+                                                        title="Make Manager">
                                                         <Shield className="size-4" />
                                                     </button>
                                                 )
                                             )}
                                             {/* Block/Unblock Button */}
-                                            <button
-                                                onClick={() => handleToggleBlock(member)}
+                                            <button onClick={() => handleToggleBlock(member)}
                                                 className={`p-1.5 rounded-lg transition-colors ${
                                                     member.isBlocked 
                                                         ? 'hover:bg-green-50 text-green-500' 
                                                         : 'hover:bg-red-50 text-red-500'
                                                 }`}
-                                                title={member.isBlocked ? 'Unblock Member' : 'Block Member'}
-                                            >
+                                                title={member.isBlocked ? 'Unblock Member' : 'Block Member'}>
                                                 {member.isBlocked ? (
                                                     <UserCheck className="size-4" />
                                                 ) : (
