@@ -73,7 +73,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
         { icon: LayoutDashboard, href: '/dashboard/admin', label: "Dashboard" },
         { icon: Users, href: '/dashboard/admin/members', label: "Members" },
         { icon: Settings, href: '/dashboard/admin/managers', label: "Managers" },
-        { icon: Clock, href: '/dashboard/admin/history', label: "All History" },
+        { icon: Clock, href: '/dashboard/admin/all-history', label: "All History" },
         { icon: Settings, href: '/dashboard/admin/settings', label: "Settings" },
     ];
 
