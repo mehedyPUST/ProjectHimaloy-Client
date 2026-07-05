@@ -12,6 +12,7 @@ export const authClient = createAuthClient({
                 phone: { type: "string" },
                 dateOfBirth: { type: "string" },
                 image: { type: "string" },
+                isManager: { type: "boolean" },
             },
         }),
     ],
