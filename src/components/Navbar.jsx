@@ -14,15 +14,11 @@ export default function Navbar() {
 
     const user = session?.user;
     const isLoggedIn = !!user;
-    const isManager = user?.isManager || user?.role === 'manager';
+    const isManager = user?.isManager === true;
     const isAdmin = user?.role === 'admin';
 
     const publicLinks = [
         { href: "/", label: "Timeline" },
-    ];
-
-    const privateLinks = [
-        { href: "/dashboard", label: "Dashboard" },
     ];
 
     const handleLogout = async () => {
@@ -48,83 +44,61 @@ export default function Navbar() {
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-1">
+                        {/* Timeline - Always visible */}
                         {publicLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
+                            <Link key={link.href} href={link.href}
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    pathname === link.href
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                }`}
-                            >
+                                    pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
                                 {link.label}
                             </Link>
                         ))}
 
-                        {isLoggedIn && privateLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
+                        {/* Member/Admin Dashboard - Logged in users */}
+                        {isLoggedIn && (
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/member"}
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    pathname === link.href
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                }`}
-                            >
-                                {link.label}
+                                    pathname?.startsWith('/dashboard/member') || pathname?.startsWith('/dashboard/admin')
+                                        ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
+                                Dashboard
                             </Link>
-                        ))}
+                        )}
 
-                        {/* ✅ Manager Dashboard Link */}
+                        {/* ✅ Manager Dashboard - ONLY if isManager is TRUE */}
                         {isLoggedIn && isManager && (
-                            <Link
-                                href="/dashboard/manager"
+                            <Link href="/dashboard/manager"
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                     pathname?.startsWith('/dashboard/manager')
-                                        ? "bg-purple-50 text-purple-600"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                }`}
-                            >
+                                        ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
                                 Manager Dashboard
                             </Link>
                         )}
                     </div>
 
-                    {/* Auth Buttons - Desktop */}
+                    {/* Auth Buttons */}
                     <div className="hidden md:flex items-center gap-2">
                         {isPending ? (
                             <div className="w-20 h-8 rounded-md bg-gray-100 animate-pulse" />
                         ) : isLoggedIn ? (
-                            <button
-                                onClick={handleLogout}
-                                className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                            >
+                            <button onClick={handleLogout}
+                                className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
                                 Logout
                             </button>
                         ) : (
                             <>
-                                <Link
-                                    href="/login"
-                                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                                >
-                                    Login
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-                                >
-                                    Register
-                                </Link>
+                                <Link href="/login"
+                                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Login</Link>
+                                <Link href="/register"
+                                    className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">Register</Link>
                             </>
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
-                    >
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
                         {isMenuOpen ? (
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -144,35 +118,27 @@ export default function Navbar() {
                             <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                                     pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}>
-                                {link.label}
-                            </Link>
+                                }`}>{link.label}</Link>
                         ))}
 
-                        {isLoggedIn && privateLinks.map((link) => (
-                            <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)}
+                        {isLoggedIn && (
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/member"} onClick={() => setIsMenuOpen(false)}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${
-                                    pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}>
-                                {link.label}
-                            </Link>
-                        ))}
+                                    pathname?.startsWith('/dashboard') ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>Dashboard</Link>
+                        )}
 
                         {isLoggedIn && isManager && (
                             <Link href="/dashboard/manager" onClick={() => setIsMenuOpen(false)}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                                     pathname?.startsWith('/dashboard/manager') ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}>
-                                Manager Dashboard
-                            </Link>
+                                }`}>Manager Dashboard</Link>
                         )}
 
                         <div className="border-t border-gray-200 mt-2 pt-2">
                             {isLoggedIn ? (
                                 <button onClick={handleLogout}
-                                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">
-                                    Logout
-                                </button>
+                                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">Logout</button>
                             ) : (
                                 <>
                                     <Link href="/login" onClick={() => setIsMenuOpen(false)}
