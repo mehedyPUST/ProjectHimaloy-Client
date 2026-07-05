@@ -28,6 +28,7 @@ export const auth = betterAuth({
                 email: profile.email,
                 image: profile.picture,
                 role: "member",
+                isManager: false,
             }),
         }
     },
@@ -46,9 +47,15 @@ export const auth = betterAuth({
                 required: true,
                 input: false,
             },
+            isManager: {
+                type: "boolean",
+                defaultValue: false,
+                required: false,
+                input: false,
+            },
             phone: {
                 type: "string",
-                required: false,  // ✅ Optional for Google sign-in
+                required: false,
                 input: true,
             },
             dateOfBirth: {
