@@ -14,6 +14,8 @@ export default function Navbar() {
 
     const user = session?.user;
     const isLoggedIn = !!user;
+    const isManager = user?.isManager || user?.role === 'manager';
+    const isAdmin = user?.role === 'admin';
 
     const publicLinks = [
         { href: "/", label: "Timeline" },
@@ -50,10 +52,11 @@ export default function Navbar() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === link.href
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    pathname === link.href
                                         ? "bg-blue-50 text-blue-600"
                                         : "text-gray-600 hover:bg-gray-100"
-                                    }`}
+                                }`}
                             >
                                 {link.label}
                             </Link>
@@ -63,14 +66,29 @@ export default function Navbar() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === link.href
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    pathname === link.href
                                         ? "bg-blue-50 text-blue-600"
                                         : "text-gray-600 hover:bg-gray-100"
-                                    }`}
+                                }`}
                             >
                                 {link.label}
                             </Link>
                         ))}
+
+                        {/* ✅ Manager Dashboard Link */}
+                        {isLoggedIn && isManager && (
+                            <Link
+                                href="/dashboard/manager"
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    pathname?.startsWith('/dashboard/manager')
+                                        ? "bg-purple-50 text-purple-600"
+                                        : "text-gray-600 hover:bg-gray-100"
+                                }`}
+                            >
+                                Manager Dashboard
+                            </Link>
+                        )}
                     </div>
 
                     {/* Auth Buttons - Desktop */}
@@ -123,57 +141,44 @@ export default function Navbar() {
                 {isMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 pb-3">
                         {publicLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === link.href
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                            >
+                            <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)}
+                                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                                    pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
                                 {link.label}
                             </Link>
                         ))}
 
                         {isLoggedIn && privateLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === link.href
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                            >
+                            <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)}
+                                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                                    pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
                                 {link.label}
                             </Link>
                         ))}
 
+                        {isLoggedIn && isManager && (
+                            <Link href="/dashboard/manager" onClick={() => setIsMenuOpen(false)}
+                                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                                    pathname?.startsWith('/dashboard/manager') ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:bg-gray-100"
+                                }`}>
+                                Manager Dashboard
+                            </Link>
+                        )}
+
                         <div className="border-t border-gray-200 mt-2 pt-2">
                             {isLoggedIn ? (
-                                <button
-                                    onClick={handleLogout}
-                                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
-                                >
+                                <button onClick={handleLogout}
+                                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">
                                     Logout
                                 </button>
                             ) : (
                                 <>
-                                    <Link
-                                        href="/login"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100"
-                                    >
-                                        Login
-                                    </Link>
-                                    <Link
-                                        href="/register"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:bg-blue-50"
-                                    >
-                                        Register
-                                    </Link>
+                                    <Link href="/login" onClick={() => setIsMenuOpen(false)}
+                                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100">Login</Link>
+                                    <Link href="/register" onClick={() => setIsMenuOpen(false)}
+                                        className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:bg-blue-50">Register</Link>
                                 </>
                             )}
                         </div>
