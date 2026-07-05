@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '@/lib/auth-client';
 import { fetchAPI } from '@/lib/api';
 import {
-    Wallet, Search, CheckCircle2, XCircle, Clock, Calendar, Check, X, Eye, Phone, Hash, Lock,
+    Wallet, Search, CheckCircle2, XCircle, Clock, Calendar, Check, X, Eye, Lock, RotateCcw, MessageSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,11 +22,12 @@ const DepositsPageForManager = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    // ✅ Password Confirm Modal
+    // Password Confirm Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmItemId, setConfirmItemId] = useState(null);
-    const [confirmAction, setConfirmAction] = useState('confirm'); // 'confirm' or 'reject'
+    const [confirmAction, setConfirmAction] = useState('confirm');
+    const [rejectReason, setRejectReason] = useState('');
 
     useEffect(() => { fetchDeposits(); fetchDueMembers(); }, []);
 
@@ -49,7 +50,7 @@ const DepositsPageForManager = () => {
 
     const filteredDeposits = deposits.filter(dep => {
         const matchesSearch = (dep.member_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (dep.phone || '').includes(searchTerm) || (dep.paid_through || dep.method || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (dep.paid_through || dep.method || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || dep.status === statusFilter;
         const matchesMonth = monthFilter === 'all' || dep.month === currentMonth;
         return matchesSearch && matchesStatus && matchesMonth;
@@ -57,11 +58,13 @@ const DepositsPageForManager = () => {
 
     const pendingCount = deposits.filter(c => c.status === 'pending').length;
     const confirmedCount = deposits.filter(c => c.status === 'confirmed').length;
+    const rejectedCount = deposits.filter(c => c.status === 'rejected').length;
 
     // ✅ Open password modal
     const handleConfirmClick = (id, action = 'confirm') => {
         setConfirmItemId(id);
         setConfirmPassword('');
+        setRejectReason('');
         setConfirmAction(action);
         setShowConfirmModal(true);
     };
@@ -69,6 +72,7 @@ const DepositsPageForManager = () => {
     // ✅ Confirm with password
     const handleConfirmWithPassword = async () => {
         if (!confirmPassword) { toast.error('Please enter your password'); return; }
+        if (confirmAction === 'reject' && !rejectReason.trim()) { toast.error('Please enter a reason for rejection'); return; }
 
         try {
             const data = await fetchAPI(`/api/deposits/${confirmItemId}/confirm`, {
@@ -77,6 +81,7 @@ const DepositsPageForManager = () => {
                     managerId: user?._id || user?.id,
                     password: confirmPassword,
                     status: confirmAction === 'reject' ? 'rejected' : 'confirmed',
+                    rejectReason: confirmAction === 'reject' ? rejectReason : null,
                 }),
             });
 
@@ -84,10 +89,11 @@ const DepositsPageForManager = () => {
                 toast.success(confirmAction === 'reject' ? 'Deposit rejected!' : 'Deposit confirmed!');
                 setShowConfirmModal(false);
                 setConfirmPassword('');
+                setRejectReason('');
                 fetchDeposits();
                 if (isDetailModalOpen) setIsDetailModalOpen(false);
             } else {
-                toast.error(data.message || 'Wrong password');
+                toast.error(data.message || 'Something went wrong');
             }
         } catch (error) { toast.error('Failed'); }
     };
@@ -99,6 +105,15 @@ const DepositsPageForManager = () => {
         const [year, month] = monthStr.split('-');
         const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
         return `${monthNames[parseInt(month)-1]} ${year}`;
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'confirmed': return { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle2, label: 'Confirmed' };
+            case 'rejected': return { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle, label: 'Rejected' };
+            case 'pending': return { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'Pending' };
+            default: return { bg: 'bg-gray-100', text: 'text-gray-700', icon: Clock, label: status };
+        }
     };
 
     if (loading) return (
@@ -116,14 +131,16 @@ const DepositsPageForManager = () => {
                 <div className="bg-white rounded-xl border border-gray-200 p-4"><p className="text-xs text-gray-500">Total Submissions</p><p className="text-2xl font-bold text-gray-900">{deposits.length}</p></div>
                 <div className="bg-white rounded-xl border border-yellow-200 p-4"><div className="flex items-center gap-2"><Clock className="size-4 text-yellow-600" /><p className="text-xs text-gray-500">Pending</p></div><p className="text-2xl font-bold text-yellow-600">{pendingCount}</p></div>
                 <div className="bg-white rounded-xl border border-green-200 p-4"><div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-green-600" /><p className="text-xs text-gray-500">Confirmed</p></div><p className="text-2xl font-bold text-green-600">{confirmedCount}</p></div>
-                <div className="bg-white rounded-xl border border-red-200 p-4"><div className="flex items-center gap-2"><XCircle className="size-4 text-red-600" /><p className="text-xs text-gray-500">Due</p></div><p className="text-2xl font-bold text-red-600">{dueMembers.length}</p></div>
+                <div className="bg-white rounded-xl border border-red-200 p-4"><div className="flex items-center gap-2"><XCircle className="size-4 text-red-600" /><p className="text-xs text-gray-500">Rejected</p></div><p className="text-2xl font-bold text-red-600">{rejectedCount}</p></div>
             </div>
 
             {/* Search & Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex flex-col md:flex-row gap-3">
-                    <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" /><input type="text" placeholder="Search by name, phone, method..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" /></div>
-                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white"><option value="all">All Status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option></select>
+                    <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" /><input type="text" placeholder="Search by name, method..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" /></div>
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white">
+                        <option value="all">All Status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="rejected">Rejected</option>
+                    </select>
                     <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white"><option value="current">Current Month</option><option value="all">All Months</option></select>
                 </div>
             </div>
@@ -142,27 +159,49 @@ const DepositsPageForManager = () => {
                     <table className="w-full">
                         <thead className="bg-gray-50"><tr><th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Member</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Month</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Amount</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500 hidden md:table-cell">Date</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500 hidden lg:table-cell">Method</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Status</th><th className="text-left py-3 px-4 text-xs font-medium text-gray-500">Actions</th></tr></thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredDeposits.map((dep, index) => (
-                                <tr key={dep._id || index} className={`hover:bg-gray-50 transition-colors ${dep.status === 'pending' ? 'bg-yellow-50/30' : ''}`}>
-                                    <td className="py-3 px-4"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">{(dep.member_name || '?').charAt(0)}</div><span className="text-sm font-medium text-gray-900">{dep.member_name || 'Unknown'}</span></div></td>
-                                    <td className="py-3 px-4"><div className="flex items-center gap-1 text-sm text-gray-500"><Calendar className="size-3" />{getMonthName(dep.month)}</div></td>
-                                    <td className="py-3 px-4"><span className="text-sm font-semibold text-gray-900">৳{dep.amount.toLocaleString()}</span></td>
-                                    <td className="py-3 px-4 hidden md:table-cell text-sm text-gray-500">{dep.date || new Date(dep.created_at).toLocaleDateString()}</td>
-                                    <td className="py-3 px-4 hidden lg:table-cell"><span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{dep.paid_through || dep.method || '-'}</span></td>
-                                    <td className="py-3 px-4">{dep.status === 'confirmed' ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700"><CheckCircle2 className="size-3" /> Confirmed</span> : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700"><Clock className="size-3" /> Pending</span>}</td>
-                                    <td className="py-3 px-4">
-                                        <div className="flex items-center gap-1">
-                                            <button onClick={() => openDetailModal(dep)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View Details"><Eye className="size-4 text-gray-500" /></button>
-                                            {dep.status === 'pending' && (
-                                                <>
-                                                    <button onClick={() => handleConfirmClick(dep._id, 'confirm')} className="p-1.5 hover:bg-green-50 rounded-lg transition-colors" title="Confirm"><Check className="size-4 text-green-600" /></button>
-                                                    <button onClick={() => handleConfirmClick(dep._id, 'reject')} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors" title="Reject"><X className="size-4 text-red-500" /></button>
-                                                </>
+                            {filteredDeposits.map((dep, index) => {
+                                const statusBadge = getStatusBadge(dep.status);
+                                const StatusIcon = statusBadge.icon;
+                                return (
+                                    <tr key={dep._id || index} className={`hover:bg-gray-50 transition-colors ${
+                                        dep.status === 'pending' ? 'bg-yellow-50/30' : 
+                                        dep.status === 'rejected' ? 'bg-red-50/20' : ''
+                                    }`}>
+                                        <td className="py-3 px-4"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">{(dep.member_name || '?').charAt(0)}</div><span className="text-sm font-medium text-gray-900">{dep.member_name || 'Unknown'}</span></div></td>
+                                        <td className="py-3 px-4"><div className="flex items-center gap-1 text-sm text-gray-500"><Calendar className="size-3" />{getMonthName(dep.month)}</div></td>
+                                        <td className="py-3 px-4"><span className="text-sm font-semibold text-gray-900">৳{dep.amount.toLocaleString()}</span></td>
+                                        <td className="py-3 px-4 hidden md:table-cell text-sm text-gray-500">{dep.date || new Date(dep.created_at).toLocaleDateString()}</td>
+                                        <td className="py-3 px-4 hidden lg:table-cell"><span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{dep.paid_through || dep.method || '-'}</span></td>
+                                        <td className="py-3 px-4">
+                                            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`}>
+                                                <StatusIcon className="size-3" /> {statusBadge.label}
+                                            </span>
+                                            {dep.status === 'rejected' && dep.reject_reason && (
+                                                <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={dep.reject_reason}>
+                                                    {dep.reject_reason}
+                                                </p>
                                             )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={() => openDetailModal(dep)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View Details"><Eye className="size-4 text-gray-500" /></button>
+                                                {dep.status === 'pending' && (
+                                                    <>
+                                                        <button onClick={() => handleConfirmClick(dep._id, 'confirm')} className="p-1.5 hover:bg-green-50 rounded-lg transition-colors" title="Confirm"><Check className="size-4 text-green-600" /></button>
+                                                        <button onClick={() => handleConfirmClick(dep._id, 'reject')} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors" title="Reject"><X className="size-4 text-red-500" /></button>
+                                                    </>
+                                                )}
+                                                {/* ✅ Rejected deposits - can re-confirm */}
+                                                {dep.status === 'rejected' && (
+                                                    <button onClick={() => handleConfirmClick(dep._id, 'confirm')} className="p-1.5 hover:bg-green-50 rounded-lg transition-colors" title="Re-confirm">
+                                                        <RotateCcw className="size-4 text-green-600" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -182,13 +221,16 @@ const DepositsPageForManager = () => {
                                 <div><p className="text-xs text-gray-500">Amount</p><p className="font-medium text-lg">৳{selectedRequest.amount.toLocaleString()}</p></div>
                                 <div><p className="text-xs text-gray-500">Date</p><p className="font-medium">{selectedRequest.date || new Date(selectedRequest.created_at).toLocaleDateString()}</p></div>
                                 <div><p className="text-xs text-gray-500">Method</p><p className="font-medium">{selectedRequest.paid_through || selectedRequest.method || '-'}</p></div>
-                                {selectedRequest.transaction_id && selectedRequest.transaction_id !== '-' && <div className="col-span-2"><p className="text-xs text-gray-500">Transaction ID</p><p className="font-medium flex items-center gap-1"><Hash className="size-3" />{selectedRequest.transaction_id}</p></div>}
+                                {selectedRequest.transaction_id && selectedRequest.transaction_id !== '-' && <div className="col-span-2"><p className="text-xs text-gray-500">Transaction ID</p><p className="font-medium flex items-center gap-1">#{selectedRequest.transaction_id}</p></div>}
                                 {selectedRequest.note && <div className="col-span-2"><p className="text-xs text-gray-500">Note</p><p className="font-medium">{selectedRequest.note}</p></div>}
+                                {selectedRequest.reject_reason && <div className="col-span-2"><p className="text-xs text-red-500">Rejection Reason</p><p className="font-medium text-red-600">{selectedRequest.reject_reason}</p></div>}
                             </div>
-                            {selectedRequest.status === 'pending' && (
+                            {(selectedRequest.status === 'pending' || selectedRequest.status === 'rejected') && (
                                 <div className="flex gap-3">
                                     <button onClick={() => { handleConfirmClick(selectedRequest._id, 'confirm'); setIsDetailModalOpen(false); }} className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 flex items-center justify-center gap-2"><Check className="size-4" /> Confirm</button>
-                                    <button onClick={() => { handleConfirmClick(selectedRequest._id, 'reject'); setIsDetailModalOpen(false); }} className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium hover:bg-red-100 flex items-center justify-center gap-2"><X className="size-4" /> Reject</button>
+                                    {selectedRequest.status === 'pending' && (
+                                        <button onClick={() => { handleConfirmClick(selectedRequest._id, 'reject'); setIsDetailModalOpen(false); }} className="flex-1 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium hover:bg-red-100 flex items-center justify-center gap-2"><X className="size-4" /> Reject</button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -196,14 +238,20 @@ const DepositsPageForManager = () => {
                 </div>
             )}
 
-            {/* ✅ Password Confirm Modal */}
+            {/* ✅ Password Confirm Modal with Reject Reason */}
             {showConfirmModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setShowConfirmModal(false)} />
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
                         <div className="text-center mb-4">
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                                <Lock className="size-6 text-blue-600" />
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                                confirmAction === 'reject' ? 'bg-red-100' : 'bg-green-100'
+                            }`}>
+                                {confirmAction === 'reject' ? (
+                                    <XCircle className="size-6 text-red-600" />
+                                ) : (
+                                    <CheckCircle2 className="size-6 text-green-600" />
+                                )}
                             </div>
                             <h3 className="text-lg font-semibold text-gray-900">
                                 {confirmAction === 'reject' ? 'Reject Deposit?' : 'Confirm Deposit?'}
@@ -213,6 +261,24 @@ const DepositsPageForManager = () => {
                             </p>
                         </div>
 
+                        {/* ✅ Reject Reason Field */}
+                        {confirmAction === 'reject' && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <MessageSquare className="size-4 inline mr-1" />
+                                    Rejection Reason <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    placeholder="Why are you rejecting this deposit?"
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    rows={3}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl outline-none resize-none focus:ring-2 focus:ring-red-500"
+                                />
+                            </div>
+                        )}
+
+                        {/* Password Field */}
                         <div className="relative mb-4">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                             <input
@@ -227,7 +293,7 @@ const DepositsPageForManager = () => {
                         </div>
 
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowConfirmModal(false); setConfirmPassword(''); }}
+                            <button onClick={() => { setShowConfirmModal(false); setConfirmPassword(''); setRejectReason(''); }}
                                 className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">
                                 Cancel
                             </button>
