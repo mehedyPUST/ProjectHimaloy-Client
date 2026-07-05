@@ -14,8 +14,6 @@ export default function Navbar() {
 
     const user = session?.user;
     const isLoggedIn = !!user;
-    const isManager = user?.isManager === true;
-    const isAdmin = user?.role === 'admin';
 
     const publicLinks = [
         { href: "/", label: "Timeline" },
@@ -44,7 +42,6 @@ export default function Navbar() {
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-1">
-                        {/* Timeline - Always visible */}
                         {publicLinks.map((link) => (
                             <Link key={link.href} href={link.href}
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -54,25 +51,12 @@ export default function Navbar() {
                             </Link>
                         ))}
 
-                        {/* Member/Admin Dashboard - Logged in users */}
                         {isLoggedIn && (
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/member"}
+                            <Link href="/dashboard"
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    pathname?.startsWith('/dashboard/member') || pathname?.startsWith('/dashboard/admin')
-                                        ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                                    pathname?.startsWith('/dashboard') ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
                                 }`}>
                                 Dashboard
-                            </Link>
-                        )}
-
-                        {/* ✅ Manager Dashboard - ONLY if isManager is TRUE */}
-                        {isLoggedIn && isManager && (
-                            <Link href="/dashboard/manager"
-                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    pathname?.startsWith('/dashboard/manager')
-                                        ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}>
-                                Manager Dashboard
                             </Link>
                         )}
                     </div>
@@ -101,12 +85,10 @@ export default function Navbar() {
                         className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
                         {isMenuOpen ? (
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         ) : (
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                         )}
                     </button>
                 </div>
@@ -120,21 +102,12 @@ export default function Navbar() {
                                     pathname === link.href ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
                                 }`}>{link.label}</Link>
                         ))}
-
                         {isLoggedIn && (
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/member"} onClick={() => setIsMenuOpen(false)}
+                            <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                                     pathname?.startsWith('/dashboard') ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
                                 }`}>Dashboard</Link>
                         )}
-
-                        {isLoggedIn && isManager && (
-                            <Link href="/dashboard/manager" onClick={() => setIsMenuOpen(false)}
-                                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                                    pathname?.startsWith('/dashboard/manager') ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}>Manager Dashboard</Link>
-                        )}
-
                         <div className="border-t border-gray-200 mt-2 pt-2">
                             {isLoggedIn ? (
                                 <button onClick={handleLogout}
