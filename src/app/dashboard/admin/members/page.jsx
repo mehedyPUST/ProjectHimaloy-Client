@@ -51,13 +51,39 @@ const AdminsMemberManagementPage = () => {
             });
 
             if (data.success) {
-                toast.success(`Member ${newBlocked ? 'blocked' : 'unblocked'} successfully!`);
+                toast.success(`Member ${newBlocked ? 'blocked' : 'unblocked'}!`);
                 fetchMembers();
             } else {
-                toast.error(data.message || 'Failed to update member');
+                toast.error(data.message || 'Failed');
             }
         } catch (error) {
             toast.error('Failed to update member');
+        }
+    };
+
+    const handleMakeManager = async (member) => {
+        if (member.isManager) {
+            toast.error('This member is already the manager');
+            return;
+        }
+
+        if (!confirm(`Make ${member.name} the manager? Current manager will lose access.`)) {
+            return;
+        }
+
+        try {
+            const data = await fetchAPI(`/api/admin/make-manager/${member._id}`, {
+                method: 'PATCH',
+            });
+
+            if (data.success) {
+                toast.success(`${member.name} is now the manager!`);
+                fetchMembers();
+            } else {
+                toast.error(data.message || 'Failed');
+            }
+        } catch (error) {
+            toast.error('Failed to update manager');
         }
     };
 
@@ -75,7 +101,7 @@ const AdminsMemberManagementPage = () => {
 
     const activeCount = members.filter(m => !m.isBlocked).length;
     const blockedCount = members.filter(m => m.isBlocked).length;
-    const managerCount = members.filter(m => m.role === 'manager').length;
+    const managerCount = members.filter(m => m.isManager).length;
 
     if (loading) {
         return (
@@ -184,11 +210,12 @@ const AdminsMemberManagementPage = () => {
                                     </td>
                                     <td className="py-3 px-4 hidden lg:table-cell">
                                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                            member.isManager ? 'bg-purple-100 text-purple-700' :
                                             member.role === 'admin' ? 'bg-red-100 text-red-700' :
-                                            member.role === 'manager' ? 'bg-purple-100 text-purple-700' :
                                             'bg-blue-100 text-blue-700'
                                         }`}>
-                                            <Shield className="size-3" />{member.role || 'member'}
+                                            <Shield className="size-3" />
+                                            {member.isManager ? 'Manager' : member.role || 'member'}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4">
@@ -203,21 +230,38 @@ const AdminsMemberManagementPage = () => {
                                         )}
                                     </td>
                                     <td className="py-3 px-4">
-                                        <button
-                                            onClick={() => handleToggleBlock(member)}
-                                            className={`p-1.5 rounded-lg transition-colors ${
-                                                member.isBlocked 
-                                                    ? 'hover:bg-green-50 text-green-500' 
-                                                    : 'hover:bg-red-50 text-red-500'
-                                            }`}
-                                            title={member.isBlocked ? 'Unblock Member' : 'Block Member'}
-                                        >
-                                            {member.isBlocked ? (
-                                                <UserCheck className="size-4" />
-                                            ) : (
-                                                <UserX className="size-4" />
+                                        <div className="flex items-center gap-1">
+                                            {/* Make Manager Button */}
+                                            {member.role !== 'admin' && (
+                                                <button
+                                                    onClick={() => handleMakeManager(member)}
+                                                    className={`p-1.5 rounded-lg transition-colors ${
+                                                        member.isManager 
+                                                            ? 'bg-purple-100 text-purple-600' 
+                                                            : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600'
+                                                    }`}
+                                                    title={member.isManager ? 'Current Manager' : 'Make Manager'}
+                                                >
+                                                    <Shield className="size-4" fill={member.isManager ? 'currentColor' : 'none'} />
+                                                </button>
                                             )}
-                                        </button>
+                                            {/* Block/Unblock Button */}
+                                            <button
+                                                onClick={() => handleToggleBlock(member)}
+                                                className={`p-1.5 rounded-lg transition-colors ${
+                                                    member.isBlocked 
+                                                        ? 'hover:bg-green-50 text-green-500' 
+                                                        : 'hover:bg-red-50 text-red-500'
+                                                }`}
+                                                title={member.isBlocked ? 'Unblock Member' : 'Block Member'}
+                                            >
+                                                {member.isBlocked ? (
+                                                    <UserCheck className="size-4" />
+                                                ) : (
+                                                    <UserX className="size-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
