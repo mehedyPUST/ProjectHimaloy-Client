@@ -21,7 +21,10 @@ export async function fetchAPI(endpoint, options = {}) {
 
         return data;
     } catch (error) {
-        console.error('API Error:', error.message);
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+            console.error('API Error:', error.message);
+        }
         throw error;
     }
 }

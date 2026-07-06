@@ -1,4 +1,3 @@
-// client/src/app/dashboard/manager/votings/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -16,6 +15,8 @@ import {
     Plus,
     FileText,
     Send,
+    Shield,
+    AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,15 @@ const ManagersPageForVoting = () => {
     const [selectedVoting, setSelectedVoting] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // State for Close Voting Modal
+    const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+    const [closeVotingId, setCloseVotingId] = useState(null);
+    const [closeAction, setCloseAction] = useState('approve'); // 'approve' or 'reject'
+    const [closeReason, setCloseReason] = useState('');
+    const [closePin, setClosePin] = useState('');
+    const [isSubmittingClose, setIsSubmittingClose] = useState(false);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [votingForm, setVotingForm] = useState({
         title: '',
@@ -66,17 +76,53 @@ const ManagersPageForVoting = () => {
         toast.success('Redirecting to schedule meeting...');
     };
 
-    const handleCloseVoting = async (votingId) => {
+    // Open Close Modal
+    const openCloseModal = (votingId) => {
+        setCloseVotingId(votingId);
+        setCloseAction('approve');
+        setCloseReason('');
+        setClosePin('');
+        setIsCloseModalOpen(true);
+    };
+
+    // Submit Close Voting
+    const handleCloseVotingSubmit = async (e) => {
+        e.preventDefault();
+        const managerId = user?._id || user?.id;
+
+        if (!closePin || closePin.length < 4) {
+            toast.error('Please enter your 4-digit PIN');
+            return;
+        }
+        if (closeAction === 'reject' && !closeReason.trim()) {
+            toast.error('Please provide a reason for rejection');
+            return;
+        }
+
+        setIsSubmittingClose(true);
+
         try {
-            const data = await fetchAPI(`/api/votings/${votingId}/close`, { method: 'PATCH' });
+            const data = await fetchAPI(`/api/votings/${closeVotingId}/close`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    managerId,
+                    action: closeAction,
+                    reason: closeAction === 'reject' ? closeReason : null,
+                    pin: closePin,
+                }),
+            });
+
             if (data.success) {
-                toast.success('Voting closed!');
+                toast.success(data.message || 'Voting closed successfully');
+                setIsCloseModalOpen(false);
                 fetchVotings();
             } else {
                 toast.error(data.message || 'Failed to close voting');
             }
         } catch (error) {
             toast.error('Failed to close voting');
+        } finally {
+            setIsSubmittingClose(false);
         }
     };
 
@@ -267,7 +313,11 @@ const ManagersPageForVoting = () => {
                                             <Calendar className="size-3" /> Call Meeting
                                         </button>
                                     )}
-                                    <button onClick={() => handleCloseVoting(voting._id)} className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1 ml-auto">
+                                    {/* Close Voting Button - now opens modal */}
+                                    <button
+                                        onClick={() => openCloseModal(voting._id)}
+                                        className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1 ml-auto"
+                                    >
                                         <CheckCircle2 className="size-3" /> Close Voting
                                     </button>
                                 </div>
@@ -323,7 +373,121 @@ const ManagersPageForVoting = () => {
                 </div>
             )}
 
-            {/* Create Voting Modal */}
+            {/* ================================ */}
+            {/* CLOSE VOTING MODAL                */}
+            {/* ================================ */}
+            {isCloseModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setIsCloseModalOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                    <Shield className="size-5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-900">Close Voting</h2>
+                                    <p className="text-xs text-gray-500">Approve or reject this voting</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsCloseModalOpen(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                                <X className="size-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCloseVotingSubmit} className="space-y-5">
+                            {/* Action: Approve / Reject */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Decision <span className="text-red-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCloseAction('approve')}
+                                        className={`py-2.5 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2 ${closeAction === 'approve'
+                                                ? 'border-green-600 bg-green-50 text-green-700'
+                                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <CheckCircle2 className="size-4" /> Approve
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCloseAction('reject')}
+                                        className={`py-2.5 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2 ${closeAction === 'reject'
+                                                ? 'border-red-600 bg-red-50 text-red-700'
+                                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <XCircle className="size-4" /> Reject
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Rejection Reason (if reject) */}
+                            {closeAction === 'reject' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Rejection Reason <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <AlertCircle className="absolute left-3 top-3 size-4 text-gray-400" />
+                                        <textarea
+                                            value={closeReason}
+                                            onChange={(e) => setCloseReason(e.target.value)}
+                                            placeholder="Why is this being rejected?"
+                                            rows={3}
+                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl outline-none resize-none"
+                                            required={closeAction === 'reject'}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Manager PIN */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Manager PIN <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    value={closePin}
+                                    onChange={(e) => setClosePin(e.target.value)}
+                                    placeholder="Enter your 4-digit PIN"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl outline-none"
+                                    maxLength="6"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCloseModalOpen(false)}
+                                    className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                                    disabled={isSubmittingClose}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingClose}
+                                    className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isSubmittingClose ? (
+                                        <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Closing...</>
+                                    ) : (
+                                        <><Send className="size-4" /> Confirm Close</>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Voting Modal (unchanged) */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setIsCreateModalOpen(false)} />

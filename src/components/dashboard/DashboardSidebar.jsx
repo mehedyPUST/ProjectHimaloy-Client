@@ -45,27 +45,30 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
     // Member Links
     const memberLinks = [
         { icon: LayoutDashboard, href: '/dashboard/member', label: "Dashboard" },
-        { icon: Wallet, href: '/dashboard/member/deposits', label: "Deposits" },
+        { icon: Wallet, href: '/dashboard/member/my-deposits', label: "Deposits" },
         { icon: HandCoins, href: '/dashboard/member/my-loans', label: "My Loans" },
-        { icon: Vote, href: '/dashboard/member/votings', label: "Voting" },
+        { icon: Vote, href: '/dashboard/member/voting', label: "Voting" },
         { icon: Clock, href: '/dashboard/member/history', label: "History" },
         { icon: User, href: '/dashboard/member/profile', label: "Profile" },
     ];
 
     // Manager Links (with Personal section)
     const managerLinks = [
-        { section: 'Manager' },
-        { icon: LayoutDashboard, href: '/dashboard/manager', label: "Dashboard" },
-        { icon: Wallet, href: '/dashboard/manager/deposits', label: "Deposits" },
-        { icon: HandCoins, href: '/dashboard/manager/loans', label: "Loan Requests" },
-        { icon: Vote, href: '/dashboard/manager/votings', label: "Voting" },
-        { icon: Bell, href: '/dashboard/manager/meetings', label: "Meetings" },
+
         { section: 'Personal' },
-        { icon: Wallet, href: '/dashboard/member/deposits', label: "My Deposits" },
+        { icon: LayoutDashboard, href: '/dashboard/member', label: "My Dashboard" },
+        { icon: Wallet, href: '/dashboard/member/my-deposits', label: "My Deposits" },
         { icon: HandCoins, href: '/dashboard/member/my-loans', label: "My Loans" },
-        { icon: Vote, href: '/dashboard/member/votings', label: "Vote" },
+        { icon: Vote, href: '/dashboard/member/voting', label: "Vote" },
         { icon: Clock, href: '/dashboard/member/history', label: "My History" },
-        { icon: User, href: '/dashboard/manager/profile', label: "Profile" },
+        { icon: User, href: '/dashboard/member/profile', label: "Profile" },
+        { section: 'Manager' },
+        { icon: LayoutDashboard, href: '/dashboard/manager', label: "Manager Dashboard" },
+        { icon: Wallet, href: '/dashboard/manager/deposits', label: "Deposits" },
+        { icon: Wallet, href: '/dashboard/manager/installments', label: "Installments" },
+        { icon: HandCoins, href: '/dashboard/manager/loans', label: "Loan Requests" },
+        { icon: Vote, href: '/dashboard/manager/voting', label: "Voting" },
+        { icon: Bell, href: '/dashboard/manager/meetings', label: "Meetings" },
     ];
 
     // Admin Links
@@ -77,11 +80,10 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
         { icon: Settings, href: '/dashboard/admin/settings', label: "Settings" },
     ];
 
-    // ✅ Nav items based on role AND isManager
-    const navItems = 
+    const navItems =
         userRole === 'admin' ? adminLinks :
-        isManager ? managerLinks :  // ✅ Check isManager for manager
-        memberLinks;
+            isManager ? managerLinks :
+                memberLinks;
 
     // Sidebar Content
     const SidebarContent = () => (
@@ -108,7 +110,6 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
             <div className="flex-1 overflow-y-auto p-3">
                 <nav className="space-y-1">
                     {navItems.map((item, index) => {
-                        // Section divider
                         if (item.section) {
                             if (isCollapsed) return null;
                             return (
@@ -124,7 +125,7 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
                         return (
                             <Link
                                 href={item.href}
-                                key={item.label}
+                                key={item.href}
                                 onClick={() => { if (isMobile) setIsOpen(false); }}
                                 className={`
                                     flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200
@@ -155,9 +156,8 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
                     </button>
                 )}
                 <button onClick={handleLogout} disabled={isLoggingOut}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        isLoggingOut ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
-                    } ${isCollapsed ? 'justify-center' : ''}`}>
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${isLoggingOut ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
+                        } ${isCollapsed ? 'justify-center' : ''}`}>
                     {isLoggingOut ? (
                         <><div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>{!isCollapsed && <span>Logging out...</span>}</>
                     ) : (
@@ -201,10 +201,9 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
                                         }
                                         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
                                         return (
-                                            <Link href={item.href} key={item.label} onClick={() => setIsOpen(false)}
-                                                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                                                    isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
-                                                }`}>
+                                            <Link href={item.href} key={item.href} onClick={() => setIsOpen(false)}
+                                                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
+                                                    }`}>
                                                 <item.icon className={`size-5 shrink-0 ${isActive ? 'text-blue-600' : ''}`} />
                                                 <span>{item.label}</span>
                                             </Link>
@@ -214,9 +213,8 @@ export default function DashboardSidebar({ isOpen, setIsOpen, isMobile }) {
                             </div>
                             <div className="p-4 border-t border-gray-200">
                                 <button onClick={handleLogout} disabled={isLoggingOut}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                                        isLoggingOut ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
-                                    }`}>
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${isLoggingOut ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
+                                        }`}>
                                     {isLoggingOut ? (
                                         <><div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div><span>Logging out...</span></>
                                     ) : (

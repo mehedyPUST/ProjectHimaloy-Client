@@ -1,4 +1,3 @@
-// client/src/app/dashboard/admin/history/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,6 +14,8 @@ import {
     XCircle,
     Users,
     Download,
+    Hash,
+    FileText,
 } from 'lucide-react';
 
 const AllHistoryViewForAdmin = () => {
@@ -23,10 +24,13 @@ const AllHistoryViewForAdmin = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState('all');
+    const [memberFilter, setMemberFilter] = useState('all'); // new
+    const [members, setMembers] = useState([]); // for dropdown
 
-    // Fetch transactions
+    // Fetch transactions & members
     useEffect(() => {
         fetchTransactions();
+        fetchMembers();
     }, []);
 
     const fetchTransactions = async () => {
@@ -39,6 +43,18 @@ const AllHistoryViewForAdmin = () => {
             console.error('Error fetching transactions:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchMembers = async () => {
+        try {
+            const data = await fetchAPI('/api/users');
+            if (data.success) {
+                const membersList = data.users || [];
+                setMembers(membersList.map(m => ({ _id: m._id, name: m.name })));
+            }
+        } catch (error) {
+            console.error('Error fetching members:', error);
         }
     };
 
@@ -79,12 +95,14 @@ const AllHistoryViewForAdmin = () => {
                 return { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock };
             case 'voting':
                 return { bg: 'bg-blue-100', text: 'text-blue-700', icon: Users };
+            case 'rejected':
+                return { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle };
             default:
                 return { bg: 'bg-gray-100', text: 'text-gray-700', icon: XCircle };
         }
     };
 
-    // Filter by date range
+    // Filter by date range (using created_at)
     const filterByDate = (txn) => {
         if (dateRange === 'all') return true;
         const txnDate = new Date(txn.created_at || txn.date);
@@ -105,9 +123,11 @@ const AllHistoryViewForAdmin = () => {
             (txn.member_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (txn.month || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (txn.method || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (txn.txn_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (txn.txn_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (txn.loan_id || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDate = filterByDate(txn);
-        return matchesTab && matchesSearch && matchesDate;
+        const matchesMember = memberFilter === 'all' || txn.member_id === memberFilter;
+        return matchesTab && matchesSearch && matchesDate && matchesMember;
     });
 
     // Summary
@@ -141,8 +161,8 @@ const AllHistoryViewForAdmin = () => {
                 </button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Summary Cards - added total count */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -176,6 +196,17 @@ const AllHistoryViewForAdmin = () => {
                         </div>
                     </div>
                 </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <FileText className="size-5 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500">Total Transactions</p>
+                            <p className="text-lg font-bold text-gray-900">{transactions.length}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Filters */}
@@ -183,10 +214,17 @@ const AllHistoryViewForAdmin = () => {
                 <div className="flex flex-col md:flex-row gap-3">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                        <input type="text" placeholder="Search by user, detail, method..." value={searchTerm}
+                        <input type="text" placeholder="Search by user, detail, method, txn..." value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
                     </div>
+                    <select value={memberFilter} onChange={(e) => setMemberFilter(e.target.value)}
+                        className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white">
+                        <option value="all">All Members</option>
+                        {members.map(m => (
+                            <option key={m._id} value={m._id}>{m.name}</option>
+                        ))}
+                    </select>
                     <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
                         className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white">
                         {dateRanges.map(range => (
@@ -227,6 +265,21 @@ const AllHistoryViewForAdmin = () => {
                                 const StatusIcon = statusData.icon;
                                 const txnDate = txn.date || (txn.created_at ? new Date(txn.created_at).toLocaleDateString() : '-');
 
+                                // Build detail string
+                                let detailParts = [];
+                                if (txn.type === 'deposit' && txn.month) detailParts.push(txn.month);
+                                if (txn.type === 'loan_installment') {
+                                    if (txn.installment_no) detailParts.push(`#${txn.installment_no}`);
+                                    if (txn.loan_id) detailParts.push(`Loan: ${txn.loan_id.slice(-8)}`);
+                                }
+                                if (txn.type === 'loan_disbursement') {
+                                    if (txn.loan_id) detailParts.push(`Loan: ${txn.loan_id.slice(-8)}`);
+                                }
+                                if (txn.type === 'loan_request' && txn.loan_id) {
+                                    detailParts.push(`Loan: ${txn.loan_id.slice(-8)}`);
+                                }
+                                const detail = detailParts.join(' • ') || (txn.type === 'deposit' ? 'Deposit' : '');
+
                                 return (
                                     <tr key={txn._id || index} className="hover:bg-gray-50 transition-colors">
                                         <td className="py-3 px-4">
@@ -243,14 +296,14 @@ const AllHistoryViewForAdmin = () => {
                                             </div>
                                         </td>
                                         <td className="py-3 px-4 hidden md:table-cell">
-                                            <p className="text-sm text-gray-600">
-                                                {txn.type === 'deposit' && `${txn.month || ''} Deposit`}
-                                                {txn.type === 'loan_installment' && `Installment`}
-                                                {txn.type === 'loan_disbursement' && `Loan Disbursed`}
-                                                {txn.type === 'loan_request' && `Loan Request`}
-                                            </p>
+                                            <p className="text-sm text-gray-600">{detail}</p>
                                             {txn.txn_id && txn.txn_id !== '-' && (
-                                                <p className="text-xs text-gray-400">Txn: {txn.txn_id}</p>
+                                                <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <Hash className="size-3" /> {txn.txn_id}
+                                                </p>
+                                            )}
+                                            {txn.status === 'rejected' && txn.reject_reason && (
+                                                <p className="text-xs text-red-500 mt-1">Reason: {txn.reject_reason}</p>
                                             )}
                                         </td>
                                         <td className="py-3 px-4">

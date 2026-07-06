@@ -1,4 +1,3 @@
-// client/src/app/dashboard/manager/deposits/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -22,9 +21,9 @@ const DepositsPageForManager = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    // Password Confirm Modal
+    // PIN Confirm Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
     const [confirmItemId, setConfirmItemId] = useState(null);
     const [confirmAction, setConfirmAction] = useState('confirm');
     const [rejectReason, setRejectReason] = useState('');
@@ -42,7 +41,13 @@ const DepositsPageForManager = () => {
     const fetchDueMembers = async () => {
         try {
             const data = await fetchAPI('/api/deposits/due');
-            if (data.success) setDueMembers(data.dueMembers || []);
+            if (data.success) {
+                // ব্যাকএন্ড থেকে আসা ডিউ মেম্বার লিস্ট – অ্যাডমিন ইতিমধ্যেই বাদ দেওয়া (সর্বোচ্চ নিরাপত্তার জন্য আবার ফিল্টার)
+                const filtered = (data.dueMembers || []).filter(m =>
+                    m.role !== 'admin'   // যদি রোল থাকে (ব্যাকএন্ডে যোগ করতে পারেন) অথবা নামের ভিত্তিতে বাদ
+                );
+                setDueMembers(filtered);
+            }
         } catch (error) { console.error('Error fetching due members:', error); }
     };
 
@@ -60,18 +65,16 @@ const DepositsPageForManager = () => {
     const confirmedCount = deposits.filter(c => c.status === 'confirmed').length;
     const rejectedCount = deposits.filter(c => c.status === 'rejected').length;
 
-    // ✅ Open password modal
     const handleConfirmClick = (id, action = 'confirm') => {
         setConfirmItemId(id);
-        setConfirmPassword('');
+        setConfirmPin('');
         setRejectReason('');
         setConfirmAction(action);
         setShowConfirmModal(true);
     };
 
-    // ✅ Confirm with password
-    const handleConfirmWithPassword = async () => {
-        if (!confirmPassword) { toast.error('Please enter your password'); return; }
+    const handleConfirmWithPin = async () => {
+        if (!confirmPin || confirmPin.length !== 6) { toast.error('Please enter your 6-digit Manager PIN'); return; }
         if (confirmAction === 'reject' && !rejectReason.trim()) { toast.error('Please enter a reason for rejection'); return; }
 
         try {
@@ -79,7 +82,7 @@ const DepositsPageForManager = () => {
                 method: 'PATCH',
                 body: JSON.stringify({
                     managerId: user?._id || user?.id,
-                    password: confirmPassword,
+                    pin: confirmPin,
                     status: confirmAction === 'reject' ? 'rejected' : 'confirmed',
                     rejectReason: confirmAction === 'reject' ? rejectReason : null,
                 }),
@@ -88,14 +91,14 @@ const DepositsPageForManager = () => {
             if (data.success) {
                 toast.success(confirmAction === 'reject' ? 'Deposit rejected!' : 'Deposit confirmed!');
                 setShowConfirmModal(false);
-                setConfirmPassword('');
+                setConfirmPin('');
                 setRejectReason('');
                 fetchDeposits();
                 if (isDetailModalOpen) setIsDetailModalOpen(false);
             } else {
-                toast.error(data.message || 'Something went wrong');
+                toast.error(data.message || 'Invalid PIN');
             }
-        } catch (error) { toast.error('Failed'); }
+        } catch (error) { toast.error('Invalid PIN'); }
     };
 
     const openDetailModal = (request) => { setSelectedRequest(request); setIsDetailModalOpen(true); };
@@ -103,8 +106,8 @@ const DepositsPageForManager = () => {
     const getMonthName = (monthStr) => {
         if (!monthStr) return '';
         const [year, month] = monthStr.split('-');
-        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        return `${monthNames[parseInt(month)-1]} ${year}`;
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${monthNames[parseInt(month) - 1]} ${year}`;
     };
 
     const getStatusBadge = (status) => {
@@ -145,7 +148,7 @@ const DepositsPageForManager = () => {
                 </div>
             </div>
 
-            {/* Due Members */}
+            {/* Due Members – এখন অ্যাডমিন বাদ পড়বে */}
             {dueMembers.length > 0 && statusFilter === 'all' && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3"><XCircle className="size-5 text-red-600" /><h3 className="font-semibold text-red-800">Due Deposits ({dueMembers.length})</h3></div>
@@ -163,24 +166,15 @@ const DepositsPageForManager = () => {
                                 const statusBadge = getStatusBadge(dep.status);
                                 const StatusIcon = statusBadge.icon;
                                 return (
-                                    <tr key={dep._id || index} className={`hover:bg-gray-50 transition-colors ${
-                                        dep.status === 'pending' ? 'bg-yellow-50/30' : 
-                                        dep.status === 'rejected' ? 'bg-red-50/20' : ''
-                                    }`}>
+                                    <tr key={dep._id || index} className={`hover:bg-gray-50 transition-colors ${dep.status === 'pending' ? 'bg-yellow-50/30' : dep.status === 'rejected' ? 'bg-red-50/20' : ''}`}>
                                         <td className="py-3 px-4"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">{(dep.member_name || '?').charAt(0)}</div><span className="text-sm font-medium text-gray-900">{dep.member_name || 'Unknown'}</span></div></td>
                                         <td className="py-3 px-4"><div className="flex items-center gap-1 text-sm text-gray-500"><Calendar className="size-3" />{getMonthName(dep.month)}</div></td>
                                         <td className="py-3 px-4"><span className="text-sm font-semibold text-gray-900">৳{dep.amount.toLocaleString()}</span></td>
                                         <td className="py-3 px-4 hidden md:table-cell text-sm text-gray-500">{dep.date || new Date(dep.created_at).toLocaleDateString()}</td>
                                         <td className="py-3 px-4 hidden lg:table-cell"><span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{dep.paid_through || dep.method || '-'}</span></td>
                                         <td className="py-3 px-4">
-                                            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`}>
-                                                <StatusIcon className="size-3" /> {statusBadge.label}
-                                            </span>
-                                            {dep.status === 'rejected' && dep.reject_reason && (
-                                                <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={dep.reject_reason}>
-                                                    {dep.reject_reason}
-                                                </p>
-                                            )}
+                                            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`}><StatusIcon className="size-3" /> {statusBadge.label}</span>
+                                            {dep.status === 'rejected' && dep.reject_reason && <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={dep.reject_reason}>{dep.reject_reason}</p>}
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-1">
@@ -191,11 +185,8 @@ const DepositsPageForManager = () => {
                                                         <button onClick={() => handleConfirmClick(dep._id, 'reject')} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors" title="Reject"><X className="size-4 text-red-500" /></button>
                                                     </>
                                                 )}
-                                                {/* ✅ Rejected deposits - can re-confirm */}
                                                 {dep.status === 'rejected' && (
-                                                    <button onClick={() => handleConfirmClick(dep._id, 'confirm')} className="p-1.5 hover:bg-green-50 rounded-lg transition-colors" title="Re-confirm">
-                                                        <RotateCcw className="size-4 text-green-600" />
-                                                    </button>
+                                                    <button onClick={() => handleConfirmClick(dep._id, 'confirm')} className="p-1.5 hover:bg-green-50 rounded-lg transition-colors" title="Re-confirm"><RotateCcw className="size-4 text-green-600" /></button>
                                                 )}
                                             </div>
                                         </td>
@@ -238,71 +229,39 @@ const DepositsPageForManager = () => {
                 </div>
             )}
 
-            {/* ✅ Password Confirm Modal with Reject Reason */}
+            {/* PIN Confirm Modal */}
             {showConfirmModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setShowConfirmModal(false)} />
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
                         <div className="text-center mb-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                                confirmAction === 'reject' ? 'bg-red-100' : 'bg-green-100'
-                            }`}>
-                                {confirmAction === 'reject' ? (
-                                    <XCircle className="size-6 text-red-600" />
-                                ) : (
-                                    <CheckCircle2 className="size-6 text-green-600" />
-                                )}
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${confirmAction === 'reject' ? 'bg-red-100' : 'bg-green-100'}`}>
+                                {confirmAction === 'reject' ? <XCircle className="size-6 text-red-600" /> : <CheckCircle2 className="size-6 text-green-600" />}
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                {confirmAction === 'reject' ? 'Reject Deposit?' : 'Confirm Deposit?'}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Enter your password to {confirmAction === 'reject' ? 'reject' : 'confirm'} this deposit
-                            </p>
+                            <h3 className="text-lg font-semibold text-gray-900">{confirmAction === 'reject' ? 'Reject Deposit?' : 'Confirm Deposit?'}</h3>
+                            <p className="text-sm text-gray-500 mt-1">Enter your 6-digit Manager PIN to {confirmAction === 'reject' ? 'reject' : 'confirm'}</p>
                         </div>
 
-                        {/* ✅ Reject Reason Field */}
                         {confirmAction === 'reject' && (
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <MessageSquare className="size-4 inline mr-1" />
-                                    Rejection Reason <span className="text-red-500">*</span>
-                                </label>
-                                <textarea
-                                    placeholder="Why are you rejecting this deposit?"
-                                    value={rejectReason}
-                                    onChange={(e) => setRejectReason(e.target.value)}
-                                    rows={3}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl outline-none resize-none focus:ring-2 focus:ring-red-500"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-2"><MessageSquare className="size-4 inline mr-1" />Rejection Reason <span className="text-red-500">*</span></label>
+                                <textarea placeholder="Why are you rejecting this deposit?" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl outline-none resize-none focus:ring-2 focus:ring-red-500" />
                             </div>
                         )}
 
-                        {/* Password Field */}
                         <div className="relative mb-4">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                                autoFocus
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmWithPassword(); }}
-                            />
+                            <input type="password" maxLength={6} placeholder="6-digit Manager PIN" value={confirmPin}
+                                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-center text-2xl tracking-[0.5em] outline-none focus:ring-2 focus:ring-blue-500" autoFocus
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmWithPin(); }} />
+                            <p className="text-xs text-gray-400 mt-1 text-center">{confirmPin.length}/6 digits</p>
                         </div>
 
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowConfirmModal(false); setConfirmPassword(''); setRejectReason(''); }}
-                                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">
-                                Cancel
-                            </button>
-                            <button onClick={handleConfirmWithPassword}
-                                className={`flex-1 py-2.5 text-white rounded-xl font-semibold transition-all ${
-                                    confirmAction === 'reject' 
-                                        ? 'bg-red-600 hover:bg-red-700' 
-                                        : 'bg-green-600 hover:bg-green-700'
-                                }`}>
+                            <button onClick={() => { setShowConfirmModal(false); setConfirmPin(''); setRejectReason(''); }} className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">Cancel</button>
+                            <button onClick={handleConfirmWithPin} disabled={confirmPin.length !== 6}
+                                className={`flex-1 py-2.5 text-white rounded-xl font-semibold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed ${confirmAction === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>
                                 {confirmAction === 'reject' ? 'Reject' : 'Confirm'}
                             </button>
                         </div>

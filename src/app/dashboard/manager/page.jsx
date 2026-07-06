@@ -1,4 +1,3 @@
-// client/src/app/dashboard/manager/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ import {
     Vote,
     ArrowUpRight,
     Shield,
+    Banknote,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -38,9 +38,10 @@ const ManagerDashBoardHomePage = () => {
         pendingLoanRequests: 0,
         pendingConfirmations: 0,
         activeVotings: 0,
-        fundBalance: 0,
+        fundBalance: 0,          // total deposits
+        availableFund: 0,        // actual available fund
         recentActivities: [],
-        dueList: [],
+        dueList: [],             // due members list
     });
 
     // Redirect if not manager
@@ -58,27 +59,34 @@ const ManagerDashBoardHomePage = () => {
 
     const fetchDashboard = async () => {
         try {
-            const data = await fetchAPI('/api/dashboard/manager');
-            if (data.success) {
-                const d = data.dashboard;
-                const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+            const [dashboardRes, fundRes, dueRes] = await Promise.all([
+                fetchAPI('/api/dashboard/manager'),
+                fetchAPI('/api/fund/available'),
+                fetchAPI('/api/deposits/due'),   // ✅ fetch due members separately
+            ]);
 
-                setDashboardData({
-                    currentMonth,
-                    totalMembers: d.totalMembers || 0,
-                    totalCollectionThisMonth: d.totalCollectionThisMonth || 0,
-                    expectedCollection: d.expectedCollection || (d.totalMembers * 200),
-                    collectionRate: d.collectionRate || 0,
-                    dueMembers: d.dueMembers || 0,
-                    activeLoans: d.activeLoans || 0,
-                    pendingLoanRequests: d.pendingLoanRequests || 0,
-                    pendingConfirmations: d.pendingConfirmations || 0,
-                    activeVotings: d.activeVotings || 0,
-                    fundBalance: d.fundBalance || d.totalCollectionThisMonth || 0,
-                    recentActivities: d.recentActivities || [],
-                    dueList: d.dueList || [],
-                });
-            }
+            const d = dashboardRes.success ? dashboardRes.dashboard : {};
+            const available = fundRes.success ? fundRes.availableFund : 0;
+            const dueMembers = dueRes.success ? dueRes.dueMembers : [];
+
+            const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            setDashboardData({
+                currentMonth,
+                totalMembers: d.totalMembers || 0,
+                totalCollectionThisMonth: d.totalCollectionThisMonth || 0,
+                expectedCollection: d.expectedCollection || (d.totalMembers * 200),
+                collectionRate: d.collectionRate || 0,
+                dueMembers: d.dueMembers || dueMembers.length,   // কাউন্ট আপডেট
+                activeLoans: d.activeLoans || 0,
+                pendingLoanRequests: d.pendingLoanRequests || 0,
+                pendingConfirmations: d.pendingConfirmations || 0,
+                activeVotings: d.activeVotings || 0,
+                fundBalance: d.fundBalance || 0,
+                availableFund: available,
+                recentActivities: d.recentActivities || [],
+                dueList: dueMembers,   // ✅ সেট করলাম
+            });
         } catch (error) {
             console.error('Error fetching manager dashboard:', error);
         } finally {
@@ -91,6 +99,7 @@ const ManagerDashBoardHomePage = () => {
             case 'deposit': return { icon: Wallet, bg: 'bg-purple-100', text: 'text-purple-600' };
             case 'loan_request': return { icon: HandCoins, bg: 'bg-blue-100', text: 'text-blue-600' };
             case 'loan_installment': return { icon: CheckCircle2, bg: 'bg-green-100', text: 'text-green-600' };
+            case 'loan_disbursement': return { icon: TrendingUp, bg: 'bg-yellow-100', text: 'text-yellow-600' };
             default: return { icon: Clock, bg: 'bg-gray-100', text: 'text-gray-600' };
         }
     };
@@ -105,10 +114,10 @@ const ManagerDashBoardHomePage = () => {
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">You are not currently the Manager</h2>
                     <p className="text-gray-500 mb-6">
-                        Only the current manager can access this dashboard. 
+                        Only the current manager can access this dashboard.
                         Go to your member dashboard to manage your personal account.
                     </p>
-                    <button 
+                    <button
                         onClick={() => router.push('/dashboard/member')}
                         className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
                     >
@@ -187,16 +196,16 @@ const ManagerDashBoardHomePage = () => {
                     <p className="text-sm text-gray-500">Active Loans</p>
                 </div>
 
-                {/* Fund Balance */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                {/* Available Fund */}
+                <div className="bg-white rounded-xl border border-green-200 p-5">
                     <div className="flex items-center justify-between">
                         <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                            <TrendingUp className="size-5 text-green-600" />
+                            <Banknote className="size-5 text-green-600" />
                         </div>
-                        <ArrowUpRight className="size-4 text-gray-400" />
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Available</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 mt-3">
-                        ৳{dashboardData.fundBalance.toLocaleString()}
+                    <p className="text-2xl font-bold text-green-700 mt-3">
+                        ৳{dashboardData.availableFund.toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-500">Available Fund</p>
                 </div>
@@ -238,15 +247,15 @@ const ManagerDashBoardHomePage = () => {
                     </div>
                 </div>
 
-                {/* Due List */}
+                {/* ✅ Due List – এখন ডেটা আসবে */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2"><AlertTriangle className="size-5 text-red-500" /><h2 className="font-semibold text-gray-900">Due Deposits</h2></div>
-                        <span className="text-sm text-red-500 font-medium">{dashboardData.dueMembers} members</span>
+                        <span className="text-sm text-red-500 font-medium">{dashboardData.dueList.length} members</span>
                     </div>
                     <div className="space-y-3">
                         {dashboardData.dueList.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-4">No due deposits</p>
+                            <p className="text-sm text-gray-400 text-center py-4">🎉 All members paid</p>
                         ) : (
                             dashboardData.dueList.map((member, i) => (
                                 <div key={member._id || i} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
@@ -277,24 +286,37 @@ const ManagerDashBoardHomePage = () => {
                             dashboardData.recentActivities.map((activity, i) => {
                                 const iconData = getActivityIcon(activity.type);
                                 const Icon = iconData.icon;
+                                const status = activity.status || 'unknown';
+                                const isConfirmed = status === 'confirmed' || status === 'completed';
+                                const isPending = status === 'pending' || status === 'pending_confirmation';
+
                                 return (
                                     <div key={activity._id || i} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconData.bg}`}><Icon className={`size-4 ${iconData.text}`} /></div>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconData.bg}`}>
+                                            <Icon className={`size-4 ${iconData.text}`} />
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{activity.member_name || 'Unknown'}</p>
-                                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ml-2 shrink-0 ${
-                                                    activity.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                    activity.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                                                }`}>{activity.status || 'pending'}</span>
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {activity.member_name || 'Unknown'}
+                                                </p>
+                                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ml-2 shrink-0 ${isConfirmed ? 'bg-green-100 text-green-700' :
+                                                    isPending ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                    {status}
+                                                </span>
                                             </div>
                                             <p className="text-xs text-gray-500 mt-0.5">
                                                 {activity.type === 'deposit' && 'Deposit'}
                                                 {activity.type === 'loan_installment' && 'Installment'}
                                                 {activity.type === 'loan_request' && 'Loan Request'}
-                                                {' - '}৳{activity.amount?.toLocaleString() || 0}
+                                                {activity.type === 'loan_disbursement' && 'Loan Disbursed'}
+                                                {' - '}৳{(activity.amount || 0).toLocaleString()}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-0.5">{new Date(activity.created_at).toLocaleDateString()}</p>
+                                            <p className="text-xs text-gray-400 mt-0.5">
+                                                {activity.created_at ? new Date(activity.created_at).toLocaleDateString() : ''}
+                                            </p>
                                         </div>
                                     </div>
                                 );

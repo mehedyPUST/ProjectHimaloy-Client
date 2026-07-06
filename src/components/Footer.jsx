@@ -4,13 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-    Wallet,
-    Mail,
-    Phone,
-    MapPin,
-    Heart,
-} from 'lucide-react';
+import { Wallet, Mail, Heart } from 'lucide-react';
 
 const quickLinks = [
     { href: "/", label: "Home" },
@@ -32,8 +26,8 @@ const Footer = () => {
         setCurrentYear(new Date().getFullYear());
     }, []);
 
-    // Hide footer on dashboard pages
-    if (pathname?.includes("dashboard")) {
+    // ✅ Hide footer on ALL dashboard pages and auth pages
+    if (pathname?.includes("dashboard") || pathname?.includes("login") || pathname?.includes("register")) {
         return null;
     }
 
@@ -59,37 +53,23 @@ const Footer = () => {
 
                     {/* Quick Links */}
                     <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">
-                            Quick Links
-                        </h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Quick Links</h3>
                         <ul className="space-y-2">
                             {quickLinks.map(({ href, label }) => (
                                 <li key={href}>
-                                    <Link
-                                        href={href}
-                                        className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                                    >
-                                        {label}
-                                    </Link>
+                                    <Link href={href} className="text-sm text-gray-600 hover:text-blue-600 transition-colors">{label}</Link>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Contact */}
+                    {/* Support */}
                     <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">
-                            Support
-                        </h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Support</h3>
                         <ul className="space-y-2">
                             {supportLinks.map(({ href, label }) => (
                                 <li key={href}>
-                                    <Link
-                                        href={href}
-                                        className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                                    >
-                                        {label}
-                                    </Link>
+                                    <Link href={href} className="text-sm text-gray-600 hover:text-blue-600 transition-colors">{label}</Link>
                                 </li>
                             ))}
                         </ul>

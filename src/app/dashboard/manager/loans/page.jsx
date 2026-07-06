@@ -28,6 +28,9 @@ const LoansPageForManager = () => {
     const [selectedLoan, setSelectedLoan] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+    // ✅ Voting loading state
+    const [startingVoting, setStartingVoting] = useState(false);
+
     // Fetch data
     useEffect(() => {
         fetchLoanRequests();
@@ -86,6 +89,9 @@ const LoansPageForManager = () => {
     const handleStartVoting = async (loanId) => {
         const managerId = user?._id || user?.id;
 
+        // ✅ Set loading to true
+        setStartingVoting(true);
+
         try {
             const data = await fetchAPI(`/api/loans/requests/${loanId}/voting/start`, {
                 method: 'POST',
@@ -101,6 +107,9 @@ const LoansPageForManager = () => {
             }
         } catch (error) {
             toast.error('Failed to start voting');
+        } finally {
+            // ✅ Reset loading
+            setStartingVoting(false);
         }
     };
 
@@ -194,9 +203,9 @@ const LoansPageForManager = () => {
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-semibold text-gray-900">{loan.member_name || 'Unknown'}</h3>
                                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${loan.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                        loan.status === 'voting' ? 'bg-blue-100 text-blue-700' :
-                                                            loan.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                                'bg-red-100 text-red-700'
+                                                    loan.status === 'voting' ? 'bg-blue-100 text-blue-700' :
+                                                        loan.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                            'bg-red-100 text-red-700'
                                                     }`}>
                                                     {loan.status}
                                                 </span>
@@ -224,9 +233,22 @@ const LoansPageForManager = () => {
                                         {loan.status === 'pending' && (
                                             <button
                                                 onClick={() => handleStartVoting(loan._id)}
-                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-1"
+                                                disabled={startingVoting}
+                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors ${startingVoting
+                                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
                                             >
-                                                <Vote className="size-3" /> Start Voting
+                                                {startingVoting ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                        Starting...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Vote className="size-3" /> Start Voting
+                                                    </>
+                                                )}
                                             </button>
                                         )}
                                     </div>
@@ -338,9 +360,22 @@ const LoansPageForManager = () => {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => handleStartVoting(selectedLoan._id)}
-                                                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 flex items-center justify-center gap-2"
+                                                disabled={startingVoting}
+                                                className={`flex-1 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${startingVoting
+                                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
                                             >
-                                                <Vote className="size-4" /> Start Voting
+                                                {startingVoting ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                        Starting Voting...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Vote className="size-4" /> Start Voting
+                                                    </>
+                                                )}
                                             </button>
                                         </div>
                                     )}

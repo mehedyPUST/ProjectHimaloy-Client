@@ -1,4 +1,3 @@
-// client/src/app/dashboard/admin/members/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,6 +13,12 @@ import {
     XCircle,
     UserX,
     UserCheck,
+    Eye,
+    X,
+    Wallet,
+    HandCoins,
+    RotateCcw,
+    Clock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -24,6 +29,17 @@ const AdminsMemberManagementPage = () => {
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
 
+    // Modal state
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalLoading, setModalLoading] = useState(false);
+    const [memberDetails, setMemberDetails] = useState({
+        deposits: [],
+        loans: [],
+        activeLoan: null,
+        pendingRequests: [],
+    });
+
     useEffect(() => {
         fetchMembers();
     }, []);
@@ -32,12 +48,13 @@ const AdminsMemberManagementPage = () => {
         try {
             const data = await fetchAPI('/api/users');
             if (data.success) {
-                // ✅ Convert string boolean to actual boolean
-                const fixedMembers = (data.users || []).map(member => ({
-                    ...member,
-                    isManager: member.isManager === true || member.isManager === "true",
-                    isBlocked: member.isBlocked === true || member.isBlocked === "true",
-                }));
+                const fixedMembers = (data.users || [])
+                    .filter(member => member.role !== 'admin')
+                    .map(member => ({
+                        ...member,
+                        isManager: member.isManager === true || member.isManager === "true",
+                        isBlocked: member.isBlocked === true || member.isBlocked === "true",
+                    }));
                 setMembers(fixedMembers);
             }
         } catch (error) {
@@ -49,6 +66,8 @@ const AdminsMemberManagementPage = () => {
 
     const handleToggleBlock = async (member) => {
         const newBlocked = !member.isBlocked;
+        const action = newBlocked ? 'block' : 'unblock';
+        if (!confirm(`Are you sure you want to ${action} ${member.name}?`)) return;
 
         try {
             const data = await fetchAPI(`/api/users/${member._id}`, {
@@ -73,9 +92,7 @@ const AdminsMemberManagementPage = () => {
             return;
         }
 
-        if (!confirm(`Make ${member.name} the manager? Current manager will lose access.`)) {
-            return;
-        }
+        if (!confirm(`Make ${member.name} the manager? Current manager will lose access.`)) return;
 
         try {
             const data = await fetchAPI(`/api/admin/make-manager/${member._id}`, {
@@ -94,9 +111,7 @@ const AdminsMemberManagementPage = () => {
     };
 
     const handleRemoveManager = async (member) => {
-        if (!confirm(`Remove ${member.name} from manager role?`)) {
-            return;
-        }
+        if (!confirm(`Remove ${member.name} from manager role?`)) return;
 
         try {
             const data = await fetchAPI(`/api/admin/remove-manager/${member._id}`, {
@@ -111,6 +126,37 @@ const AdminsMemberManagementPage = () => {
             }
         } catch (error) {
             toast.error('Failed to remove manager');
+        }
+    };
+
+    // Open member detail modal
+    const handleViewMember = async (member) => {
+        setSelectedMember(member);
+        setIsModalOpen(true);
+        setModalLoading(true);
+        setMemberDetails({ deposits: [], loans: [], activeLoan: null, pendingRequests: [] });
+
+        try {
+            // Fetch deposits, loans
+            const [depositsRes, loansRes] = await Promise.all([
+                fetchAPI(`/api/deposits/my?memberId=${member._id}`),
+                fetchAPI(`/api/loans/my?memberId=${member._id}`),
+            ]);
+
+            const deposits = depositsRes.success ? depositsRes.deposits || [] : [];
+            const loansData = loansRes.success ? loansRes : { active: null, pending: [], history: [] };
+
+            setMemberDetails({
+                deposits: deposits,
+                activeLoan: loansData.active || null,
+                pendingRequests: loansData.pending || [],
+                // We can also include history if needed
+            });
+        } catch (error) {
+            console.error('Error fetching member details:', error);
+            toast.error('Failed to load member details');
+        } finally {
+            setModalLoading(false);
         }
     };
 
@@ -148,6 +194,12 @@ const AdminsMemberManagementPage = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Member Management</h1>
                     <p className="text-gray-500 mt-1">Manage all members and their roles</p>
                 </div>
+                <button
+                    onClick={fetchMembers}
+                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors flex items-center gap-2"
+                >
+                    <RotateCcw className="size-4" /> Refresh
+                </button>
             </div>
 
             {/* Stats */}
@@ -184,7 +236,6 @@ const AdminsMemberManagementPage = () => {
                         <option value="all">All Roles</option>
                         <option value="member">Member</option>
                         <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
                     </select>
                     <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
                         className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none bg-white">
@@ -236,13 +287,10 @@ const AdminsMemberManagementPage = () => {
                                         </div>
                                     </td>
                                     <td className="py-3 px-4 hidden lg:table-cell">
-                                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                                            member.isManager ? 'bg-purple-100 text-purple-700' :
-                                            member.role === 'admin' ? 'bg-red-100 text-red-700' :
-                                            'bg-blue-100 text-blue-700'
-                                        }`}>
+                                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${member.isManager ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                                            }`}>
                                             <Shield className="size-3" />
-                                            {member.isManager ? 'Manager' : member.role || 'member'}
+                                            {member.isManager ? 'Manager' : 'Member'}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4">
@@ -258,35 +306,26 @@ const AdminsMemberManagementPage = () => {
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="flex items-center gap-1">
-                                            {/* Manager Button */}
-                                            {member.role !== 'admin' && (
-                                                member.isManager ? (
-                                                    <button onClick={() => handleRemoveManager(member)}
-                                                        className="p-1.5 rounded-lg bg-purple-100 text-purple-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                                        title="Remove Manager">
-                                                        <Shield className="size-4" fill="currentColor" />
-                                                    </button>
-                                                ) : (
-                                                    <button onClick={() => handleMakeManager(member)}
-                                                        className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
-                                                        title="Make Manager">
-                                                        <Shield className="size-4" />
-                                                    </button>
-                                                )
-                                            )}
-                                            {/* Block/Unblock Button */}
+                                            <button onClick={() => handleViewMember(member)}
+                                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-blue-600"
+                                                title="View Member Details">
+                                                <Eye className="size-4" />
+                                            </button>
+                                            <button onClick={member.isManager ? () => handleRemoveManager(member) : () => handleMakeManager(member)}
+                                                className={`p-1.5 rounded-lg transition-colors ${member.isManager
+                                                    ? 'bg-purple-100 text-purple-600 hover:bg-red-50 hover:text-red-500'
+                                                    : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600'
+                                                    }`}
+                                                title={member.isManager ? 'Remove Manager' : 'Make Manager'}>
+                                                <Shield className="size-4" fill={member.isManager ? 'currentColor' : 'none'} />
+                                            </button>
                                             <button onClick={() => handleToggleBlock(member)}
-                                                className={`p-1.5 rounded-lg transition-colors ${
-                                                    member.isBlocked 
-                                                        ? 'hover:bg-green-50 text-green-500' 
-                                                        : 'hover:bg-red-50 text-red-500'
-                                                }`}
+                                                className={`p-1.5 rounded-lg transition-colors ${member.isBlocked
+                                                    ? 'hover:bg-green-50 text-green-500'
+                                                    : 'hover:bg-red-50 text-red-500'
+                                                    }`}
                                                 title={member.isBlocked ? 'Unblock Member' : 'Block Member'}>
-                                                {member.isBlocked ? (
-                                                    <UserCheck className="size-4" />
-                                                ) : (
-                                                    <UserX className="size-4" />
-                                                )}
+                                                {member.isBlocked ? <UserCheck className="size-4" /> : <UserX className="size-4" />}
                                             </button>
                                         </div>
                                     </td>
@@ -303,6 +342,119 @@ const AdminsMemberManagementPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* ==================== MEMBER DETAIL MODAL ==================== */}
+            {isModalOpen && selectedMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setIsModalOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                    {(selectedMember.name || '?').charAt(0)}
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-900">{selectedMember.name}</h2>
+                                    <p className="text-xs text-gray-500">
+                                        {selectedMember.isManager ? 'Manager' : 'Member'} • Joined {selectedMember.created_at ? new Date(selectedMember.created_at).toLocaleDateString() : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                                <X className="size-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {modalLoading ? (
+                                <div className="flex justify-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Basic Info */}
+                                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+                                        <div><p className="text-xs text-gray-500">Email</p><p className="font-medium">{selectedMember.email || '-'}</p></div>
+                                        <div><p className="text-xs text-gray-500">Phone</p><p className="font-medium">{selectedMember.phone || '-'}</p></div>
+                                        <div><p className="text-xs text-gray-500">Role</p><p className="font-medium">{selectedMember.isManager ? 'Manager' : 'Member'}</p></div>
+                                        <div><p className="text-xs text-gray-500">Status</p>
+                                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${selectedMember.isBlocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                                {selectedMember.isBlocked ? 'Blocked' : 'Active'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Total Deposits */}
+                                    <div className="border-t border-gray-200 pt-4">
+                                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                            <Wallet className="size-4 text-purple-600" />
+                                            Deposits
+                                        </h3>
+                                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex justify-between items-center">
+                                            <span className="text-sm text-gray-700">Total Confirmed</span>
+                                            <span className="text-lg font-bold text-purple-700">
+                                                ৳{memberDetails.deposits.filter(d => d.status === 'confirmed').reduce((s, d) => s + (d.amount || 0), 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 text-xs text-gray-500">
+                                            {memberDetails.deposits.length} deposit(s) total
+                                        </div>
+                                    </div>
+
+                                    {/* Active Loan */}
+                                    <div className="border-t border-gray-200 pt-4">
+                                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                            <HandCoins className="size-4 text-blue-600" />
+                                            Active Loan
+                                        </h3>
+                                        {memberDetails.activeLoan ? (
+                                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Amount</span>
+                                                    <span className="font-bold">৳{memberDetails.activeLoan.amount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Installments</span>
+                                                    <span>{memberDetails.activeLoan.paid_installments || 0}/{memberDetails.activeLoan.total_installments || 0}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Due</span>
+                                                    <span className="font-medium text-red-600">৳{(memberDetails.activeLoan.due_amount || 0).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-400">No active loan</p>
+                                        )}
+                                    </div>
+
+                                    {/* Pending Requests */}
+                                    <div className="border-t border-gray-200 pt-4">
+                                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                            <Clock className="size-4 text-yellow-600" />
+                                            Pending Loan Requests
+                                        </h3>
+                                        {memberDetails.pendingRequests.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {memberDetails.pendingRequests.map((req, i) => (
+                                                    <div key={i} className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex justify-between items-center">
+                                                        <div>
+                                                            <p className="text-sm font-medium">৳{req.amount.toLocaleString()}</p>
+                                                            <p className="text-xs text-gray-500">{req.status} • {req.tenure} months</p>
+                                                        </div>
+                                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">{req.status}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-400">No pending requests</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
