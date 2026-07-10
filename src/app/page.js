@@ -15,6 +15,7 @@ import {
   Bell,
   TrendingUp,
   Sparkles,
+  Gem,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -57,11 +58,11 @@ export default function Home() {
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case 'deposit': return { icon: Wallet, bg: 'bg-purple-100', text: 'text-purple-600' };
-      case 'loan_request': return { icon: HandCoins, bg: 'bg-blue-100', text: 'text-blue-600' };
+      case 'deposit': return { icon: Wallet, bg: 'bg-emerald-100', text: 'text-emerald-600' };
+      case 'loan_request': return { icon: HandCoins, bg: 'bg-teal-100', text: 'text-teal-600' };
       case 'loan_installment': return { icon: CheckCircle2, bg: 'bg-green-100', text: 'text-green-600' };
-      case 'loan_disbursement': return { icon: TrendingUp, bg: 'bg-yellow-100', text: 'text-yellow-600' };
-      case 'manager_rotation': return { icon: Users, bg: 'bg-orange-100', text: 'text-orange-600' };
+      case 'loan_disbursement': return { icon: TrendingUp, bg: 'bg-emerald-100', text: 'text-emerald-600' };
+      case 'manager_rotation': return { icon: Users, bg: 'bg-amber-100', text: 'text-amber-600' };
       default: return { icon: Clock, bg: 'bg-gray-100', text: 'text-gray-600' };
     }
   };
@@ -79,33 +80,36 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white py-20 md:py-28">
+      {/* Hero Section - Emerald Gradient */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 text-white py-20 md:py-28">
         {/* Background Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-400 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
-          <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-blue-400 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-300 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-emerald-300 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          {/* Gem/Sparkle decorations */}
+          <div className="absolute top-10 right-10 w-8 h-8 bg-amber-300 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-20 left-20 w-6 h-6 bg-emerald-300 rounded-full blur-2xl"></div>
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2 rounded-full text-sm font-semibold mb-8 border border-white/10">
-            <Sparkles className="size-4" />
+            <Gem className="size-4" />
             <span>🏔️ Cooperative Fund Management</span>
           </div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
-            Project<span className="text-yellow-300">Himaloy</span>
+            Project<span className="text-amber-300">Himaloy</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-xl md:text-2xl text-emerald-100 max-w-2xl mx-auto mb-8 leading-relaxed">
             A democratic, interest-free cooperative fund management system. Members contribute monthly, apply for loans, and manage funds together.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/register"
-              className="px-8 py-3.5 bg-yellow-400 text-blue-900 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/30 hover:shadow-yellow-400/50 transform hover:-translate-y-0.5"
+              className="px-8 py-3.5 bg-amber-400 text-emerald-900 rounded-xl font-bold hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 transform hover:-translate-y-0.5"
             >
               Join Now
             </Link>
@@ -121,89 +125,89 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-2xl mx-auto mt-12 pt-8 border-t border-white/20">
             <div>
               <p className="text-3xl font-bold text-white">{stats.members}+</p>
-              <p className="text-sm text-blue-200">Members</p>
+              <p className="text-sm text-emerald-200">Members</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-white">৳{stats.totalDeposits.toLocaleString()}</p>
-              <p className="text-sm text-blue-200">Total Deposits</p>
+              <p className="text-sm text-emerald-200">Total Deposits</p>
             </div>
             <div className="hidden md:block">
               <p className="text-3xl font-bold text-white">0</p>
-              <p className="text-sm text-blue-200">Active Loans</p>
+              <p className="text-sm text-emerald-200">Active Loans</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Emerald/Teal Cards */}
       <section className="py-16 px-4 max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900">Why <span className="text-blue-600">Himaloy</span>?</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Why <span className="text-emerald-600">Himaloy</span>?</h2>
           <p className="text-gray-500 mt-2 max-w-xl mx-auto">Built on trust, transparency, and community participation</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
-            <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
-              <Wallet className="size-8 text-purple-600" />
+          <div className="bg-white rounded-2xl border border-emerald-100 p-8 text-center hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+              <Wallet className="size-8 text-emerald-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">Monthly Deposits</h3>
             <p className="text-gray-500 leading-relaxed">
-              Contribute monthly with minimum <span className="font-semibold text-gray-700">৳200</span>. Track your deposit history and build your fund.
+              Contribute monthly with minimum <span className="font-semibold text-emerald-700">৳200</span>. Track your deposit history and build your fund.
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
-            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
-              <HandCoins className="size-8 text-blue-600" />
+          <div className="bg-white rounded-2xl border border-emerald-100 p-8 text-center hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
+            <div className="w-16 h-16 rounded-2xl bg-teal-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+              <HandCoins className="size-8 text-teal-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">Interest-Free Loans</h3>
             <p className="text-gray-500 leading-relaxed">
-              Apply for loans with <span className="font-semibold text-gray-700">0% interest</span>. Choose 5 or 10 month terms with flexible installments.
+              Apply for loans with <span className="font-semibold text-teal-700">0% interest</span>. Choose 5 or 10 month terms with flexible installments.
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
+          <div className="bg-white rounded-2xl border border-emerald-100 p-8 text-center hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
             <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
               <Vote className="size-8 text-green-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">Democratic Voting</h3>
             <p className="text-gray-500 leading-relaxed">
-              Every member votes on loan requests. <span className="font-semibold text-gray-700">Transparent</span> decision making with meeting support.
+              Every member votes on loan requests. <span className="font-semibold text-green-700">Transparent</span> decision making with meeting support.
             </p>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-16 px-4 bg-gray-50">
+      {/* How It Works - Emerald Theme */}
+      <section className="py-16 px-4 bg-emerald-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">How It <span className="text-blue-600">Works</span></h2>
+            <h2 className="text-3xl font-bold text-gray-900">How It <span className="text-emerald-600">Works</span></h2>
             <p className="text-gray-500 mt-2">Four simple steps to get started</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
-              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">1</div>
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-                <Users className="size-7 text-blue-600" />
+            <div className="bg-white rounded-xl border border-emerald-100 p-6 text-center relative hover:shadow-lg hover:border-emerald-300 transition-all">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center">1</div>
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                <Users className="size-7 text-emerald-600" />
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Join</h4>
               <p className="text-sm text-gray-500">Register as a member and start contributing monthly</p>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
-              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">2</div>
-              <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-                <Wallet className="size-7 text-purple-600" />
+            <div className="bg-white rounded-xl border border-emerald-100 p-6 text-center relative hover:shadow-lg hover:border-emerald-300 transition-all">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center">2</div>
+              <div className="w-14 h-14 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-4">
+                <Wallet className="size-7 text-teal-600" />
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Contribute</h4>
               <p className="text-sm text-gray-500">Make monthly deposits and build your fund balance</p>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
-              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">3</div>
+            <div className="bg-white rounded-xl border border-emerald-100 p-6 text-center relative hover:shadow-lg hover:border-emerald-300 transition-all">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center">3</div>
               <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <HandCoins className="size-7 text-green-600" />
               </div>
@@ -211,10 +215,10 @@ export default function Home() {
               <p className="text-sm text-gray-500">Request a loan and participate in community voting</p>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
-              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">4</div>
-              <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="size-7 text-yellow-600" />
+            <div className="bg-white rounded-xl border border-emerald-100 p-6 text-center relative hover:shadow-lg hover:border-emerald-300 transition-all">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center">4</div>
+              <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="size-7 text-amber-600" />
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Grow</h4>
               <p className="text-sm text-gray-500">Repay installments and build savings for the community</p>
@@ -223,10 +227,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Timeline */}
+      {/* Timeline - Emerald Theme */}
       <section className="py-16 px-4 max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-3 border border-emerald-200">
             <Bell className="size-4" />
             <span>Live Feed</span>
           </div>
@@ -236,18 +240,18 @@ export default function Home() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto"></div>
             <p className="mt-3 text-gray-500">Loading timeline...</p>
           </div>
         ) : activities.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <Clock className="size-12 text-gray-300 mx-auto mb-4" />
+          <div className="bg-white rounded-xl border border-emerald-200 p-12 text-center">
+            <Clock className="size-12 text-emerald-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900">No Activity Yet</h3>
             <p className="text-gray-500 mt-1">Transactions will appear here once the fund starts</p>
           </div>
         ) : (
           <div className="relative">
-            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-blue-100 hidden sm:block"></div>
+            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-emerald-200 hidden sm:block"></div>
 
             <div className="space-y-4">
               {activities.map((txn, index) => {
@@ -262,7 +266,7 @@ export default function Home() {
                       <Icon className={`size-4 ${iconData.text}`} />
                     </div>
 
-                    <div className="flex-1 bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                    <div className="flex-1 bg-white rounded-xl border border-emerald-100 p-4 hover:shadow-md hover:border-emerald-300 transition-all">
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`sm:hidden w-7 h-7 rounded-full ${iconData.bg} flex items-center justify-center`}>
                           <Icon className={`size-3.5 ${iconData.text}`} />
@@ -276,7 +280,7 @@ export default function Home() {
                         </span>
                         {txn.status && (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${txn.status === 'confirmed' || txn.status === 'completed' ? 'bg-green-100 text-green-700' :
-                            txn.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            txn.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                               txn.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                 'bg-gray-100 text-gray-600'
                             }`}>
@@ -306,16 +310,20 @@ export default function Home() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      {/* CTA Section - Emerald Gradient */}
+      <section className="py-16 px-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Join the Community?</h2>
-          <p className="text-blue-100 mb-8 max-w-xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/10">
+            <Gem className="size-4" />
+            <span>Join the Community</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Ready to Grow Together?</h2>
+          <p className="text-emerald-100 mb-8 max-w-xl mx-auto">
             Start your journey with ProjectHimaloy today. Build funds, support each other, and grow together.
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-yellow-400 text-blue-900 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/30 hover:shadow-yellow-400/50 transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-amber-400 text-emerald-900 rounded-xl font-bold hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 transform hover:-translate-y-0.5"
           >
             Get Started <ArrowRight className="size-5" />
           </Link>
