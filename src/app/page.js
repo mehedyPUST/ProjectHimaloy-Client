@@ -14,6 +14,7 @@ import {
   Vote,
   Bell,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,6 +25,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchPublicTimeline();
+    fetchStats();
   }, []);
 
   const fetchPublicTimeline = async () => {
@@ -36,6 +38,20 @@ export default function Home() {
       console.error('Error fetching timeline:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const [membersRes, depositsRes] = await Promise.all([
+        fetchAPI('/api/users'),
+        fetchAPI('/api/deposits'),
+      ]);
+      const members = membersRes.success ? membersRes.users?.filter(u => u.role !== 'admin').length || 0 : 0;
+      const deposits = depositsRes.success ? depositsRes.deposits?.filter(d => d.status === 'confirmed').reduce((s, d) => s + (d.amount || 0), 0) || 0 : 0;
+      setStats({ members, totalDeposits: deposits, activeLoans: 0 });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
   };
 
@@ -62,69 +78,159 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 text-center px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <span>🏔️</span>
-            <span>Cooperative Fund Management</span>
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white py-20 md:py-28">
+        {/* Background Decorative Elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-400 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-blue-400 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-4 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2 rounded-full text-sm font-semibold mb-8 border border-white/10">
+            <Sparkles className="size-4" />
+            <span>🏔️ Cooperative Fund Management</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Project<span className="text-blue-600">Himaloy</span>
+
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
+            Project<span className="text-yellow-300">Himaloy</span>
           </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            A democratic, interest-free cooperative fund management system.
-            Members contribute monthly, apply for loans, and manage funds together.
+
+          <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">
+            A democratic, interest-free cooperative fund management system. Members contribute monthly, apply for loans, and manage funds together.
           </p>
-          <div className="flex items-center justify-center gap-4">
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/register"
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+              className="px-8 py-3.5 bg-yellow-400 text-blue-900 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/30 hover:shadow-yellow-400/50 transform hover:-translate-y-0.5"
             >
               Join Now
             </Link>
             <Link
               href="/login"
-              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:border-gray-400 transition-colors"
+              className="px-8 py-3.5 border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/10 transition-all backdrop-blur-sm"
             >
               Sign In
             </Link>
           </div>
+
+          {/* Stats Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-2xl mx-auto mt-12 pt-8 border-t border-white/20">
+            <div>
+              <p className="text-3xl font-bold text-white">{stats.members}+</p>
+              <p className="text-sm text-blue-200">Members</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-white">৳{stats.totalDeposits.toLocaleString()}</p>
+              <p className="text-sm text-blue-200">Total Deposits</p>
+            </div>
+            <div className="hidden md:block">
+              <p className="text-3xl font-bold text-white">0</p>
+              <p className="text-sm text-blue-200">Active Loans</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-12 px-4 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
-              <Wallet className="size-6 text-purple-600" />
+      {/* Features Section */}
+      <section className="py-16 px-4 max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900">Why <span className="text-blue-600">Himaloy</span>?</h2>
+          <p className="text-gray-500 mt-2 max-w-xl mx-auto">Built on trust, transparency, and community participation</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
+            <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+              <Wallet className="size-8 text-purple-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Monthly Deposits</h3>
-            <p className="text-sm text-gray-500">Contribute monthly with minimum ৳200. Track your deposit history.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Monthly Deposits</h3>
+            <p className="text-gray-500 leading-relaxed">
+              Contribute monthly with minimum <span className="font-semibold text-gray-700">৳200</span>. Track your deposit history and build your fund.
+            </p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
-              <HandCoins className="size-6 text-blue-600" />
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
+            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+              <HandCoins className="size-8 text-blue-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Interest-Free Loans</h3>
-            <p className="text-sm text-gray-500">Apply for loans with democratic voting. 5 or 10 month terms.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Interest-Free Loans</h3>
+            <p className="text-gray-500 leading-relaxed">
+              Apply for loans with <span className="font-semibold text-gray-700">0% interest</span>. Choose 5 or 10 month terms with flexible installments.
+            </p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <Vote className="size-6 text-green-600" />
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 group">
+            <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform">
+              <Vote className="size-8 text-green-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Democratic Voting</h3>
-            <p className="text-sm text-gray-500">Every member votes on loan requests. Transparent decision making.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Democratic Voting</h3>
+            <p className="text-gray-500 leading-relaxed">
+              Every member votes on loan requests. <span className="font-semibold text-gray-700">Transparent</span> decision making with meeting support.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">How It <span className="text-blue-600">Works</span></h2>
+            <p className="text-gray-500 mt-2">Four simple steps to get started</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">1</div>
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                <Users className="size-7 text-blue-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Join</h4>
+              <p className="text-sm text-gray-500">Register as a member and start contributing monthly</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">2</div>
+              <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <Wallet className="size-7 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Contribute</h4>
+              <p className="text-sm text-gray-500">Make monthly deposits and build your fund balance</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">3</div>
+              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <HandCoins className="size-7 text-green-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Apply</h4>
+              <p className="text-sm text-gray-500">Request a loan and participate in community voting</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">4</div>
+              <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="size-7 text-yellow-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Grow</h4>
+              <p className="text-sm text-gray-500">Repay installments and build savings for the community</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Timeline */}
-      <section className="py-12 px-4 max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
+      <section className="py-16 px-4 max-w-3xl mx-auto">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
+            <Bell className="size-4" />
+            <span>Live Feed</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Recent Activity</h2>
           <p className="text-gray-500 mt-2">Latest transactions from the community</p>
         </div>
 
@@ -141,7 +247,6 @@ export default function Home() {
           </div>
         ) : (
           <div className="relative">
-            {/* Timeline Line */}
             <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-blue-100 hidden sm:block"></div>
 
             <div className="space-y-4">
@@ -153,13 +258,11 @@ export default function Home() {
 
                 return (
                   <div key={txn._id || index} className="flex gap-4 relative">
-                    {/* Timeline Dot */}
-                    <div className={`hidden sm:flex w-10 h-10 rounded-full ${iconData.bg} items-center justify-center shrink-0 relative z-10 border-2 border-white`}>
+                    <div className={`hidden sm:flex w-10 h-10 rounded-full ${iconData.bg} items-center justify-center shrink-0 relative z-10 border-2 border-white shadow-sm`}>
                       <Icon className={`size-4 ${iconData.text}`} />
                     </div>
 
-                    {/* Content Card */}
-                    <div className="flex-1 bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                    <div className="flex-1 bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`sm:hidden w-7 h-7 rounded-full ${iconData.bg} flex items-center justify-center`}>
                           <Icon className={`size-3.5 ${iconData.text}`} />
@@ -172,8 +275,10 @@ export default function Home() {
                                   txn.type === 'manager_rotation' ? 'Manager Rotation' : 'Transaction'}
                         </span>
                         {txn.status && (
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${txn.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                            txn.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${txn.status === 'confirmed' || txn.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            txn.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              txn.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-600'
                             }`}>
                             {txn.status}
                           </span>
@@ -181,7 +286,7 @@ export default function Home() {
                       </div>
 
                       <p className="text-sm text-gray-900">
-                        <span className="font-medium">{txn.member_name || 'Member'}</span>
+                        <span className="font-semibold text-gray-900">{txn.member_name || 'Member'}</span>
                         {' '}{getActivityText(txn)}
                       </p>
 
@@ -190,7 +295,7 @@ export default function Home() {
                           <Calendar className="size-3" />
                           {txnDate}
                         </span>
-                        {timeAgo && <span>{timeAgo}</span>}
+                        {timeAgo && <span>• {timeAgo}</span>}
                       </div>
                     </div>
                   </div>
@@ -201,15 +306,26 @@ export default function Home() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 text-center border-t border-gray-200">
-        <p className="text-sm text-gray-500">© 2026 ProjectHimaloy. All rights reserved.</p>
-      </footer>
+      {/* CTA Section */}
+      <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to Join the Community?</h2>
+          <p className="text-blue-100 mb-8 max-w-xl mx-auto">
+            Start your journey with ProjectHimaloy today. Build funds, support each other, and grow together.
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-yellow-400 text-blue-900 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/30 hover:shadow-yellow-400/50 transform hover:-translate-y-0.5"
+          >
+            Get Started <ArrowRight className="size-5" />
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
 
-// Helper: Time agoo
+// Helper: Time ago
 function getTimeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000);
   if (seconds < 60) return 'just now';
@@ -221,5 +337,3 @@ function getTimeAgo(date) {
   if (days < 7) return `${days}d ago`;
   return '';
 }
-
-
