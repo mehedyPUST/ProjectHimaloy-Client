@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🏔️ ProjectHimaloy
 
-## Getting Started
+A democratic, interest-free cooperative fund management system for groups and communities.
 
-First, run the development server:
+![ProjectHimaloy](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![Express](https://img.shields.io/badge/Express.js-4.0-lightgrey)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📖 Table of Contents
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [API Documentation](#-api-documentation)
+- [User Roles](#-user-roles)
+- [Core Functionality](#-core-functionality)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🌟 Overview
 
-To learn more about Next.js, take a look at the following resources:
+**ProjectHimaloy** is a full‑stack web application that helps groups manage their cooperative funds in a transparent, democratic way. Members contribute monthly deposits, apply for interest‑free loans, vote on loan requests, and track their financial activity – all within a secure, role‑based system.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Why ProjectHimaloy?
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 💰 **Interest‑Free Model** – No interest on loans, extra installments become personal savings.
+- 🗳️ **Democratic Voting** – Every member votes on loan requests.
+- 🔒 **Secure** – Manager actions require a 6‑digit PIN.
+- 📧 **Email Notifications** – Automatic emails for important events.
+- 📊 **Complete Transparency** – Full transaction history visible to all members.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ✨ Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 👤 Member Features
+- 📊 **Dashboard** – Total deposits, last deposit, current month status, active loan.
+- 💰 **Monthly Deposits** – Submit deposits with payment method, transaction ID, and notes.
+- 💸 **Loan Management** – Apply for loans (5/10 months), view active loans, make installments.
+- 🗳️ **Voting** – Cast votes on loan requests, view voting progress.
+- 📋 **Transaction History** – Complete record of all deposits, loans, and installments.
+- 👤 **Profile** – Manage personal information and profile image.
+
+### 👔 Manager Features
+- 📊 **Manager Dashboard** – Overview of collections, pending confirmations, and active loans.
+- 💰 **Deposit Approval** – Review and confirm/reject member deposits with PIN verification.
+- 💸 **Loan Management** – Start voting, track active loans, and view loan details.
+- 🗳️ **Voting Management** – Create general votings, view results, and call meetings.
+- 📅 **Meetings** – Schedule meetings (quick, monthly, loan‑related).
+- 💳 **Installment Approval** – Confirm/reject loan installment payments.
+- 👤 **Manager Profile** – Set/change manager action PIN.
+
+### 🔧 Admin Features
+- 👥 **Member Management** – View all members, block/unblock, assign/remove manager role.
+- 📜 **Transaction History** – View all transactions across the entire fund.
+- 🔄 **Manager Overview** – Current manager details and past manager cycles.
+- ⚙️ **System Settings** – Configure deposit amounts, loan rules, voting thresholds.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 14 (App Router), Tailwind CSS, Hero UI |
+| **Backend** | Express.js, Node.js |
+| **Database** | MongoDB (Native Driver) |
+| **Authentication** | Better Auth (Email/Password + Google OAuth) |
+| **Email** | Nodemailer (Gmail SMTP) |
+| **Scheduling** | node‑cron (automated reminders) |
+| **Deployment** | Vercel (Frontend), Vercel/Render (Backend) |
+
+---
+
+## 📁 Project Structure
