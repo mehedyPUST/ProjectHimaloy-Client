@@ -82,4 +82,4 @@ A democratic, interest-free cooperative fund management system for groups and co
 
 ---
 
-## 📁 Project Structure
+
