@@ -72,17 +72,17 @@ export default function SignInPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 px-4 animate__animated animate__backInDown">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-4 animate__animated animate__backInDown">
 
-            <Card className="w-full max-w-md p-6 md:p-8 rounded-2xl shadow-lg border border-blue-100">
+            <Card className="w-full max-w-md p-6 md:p-8 rounded-2xl shadow-lg border border-emerald-100">
 
                 {/* Header */}
                 <div className="text-center mb-6">
-                    <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-3">
+                    <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-3">
                         🔐 Welcome Back
                     </div>
 
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                         Sign In
                     </h1>
 
@@ -114,7 +114,7 @@ export default function SignInPage() {
                                 placeholder="john@example.com"
                                 className="h-12 w-full pl-10 pr-3 rounded-xl border border-gray-200 bg-white
                                 transition-all duration-200
-                                focus:border-blue-400 focus:ring-2 focus:ring-blue-100
+                                focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100
                                 hover:border-gray-300"
                             />
                         </div>
@@ -136,7 +136,7 @@ export default function SignInPage() {
                                 placeholder="Enter your password"
                                 className="h-12 w-full pl-10 pr-10 rounded-xl border border-gray-200 bg-white
                                 transition-all duration-200
-                                focus:border-blue-400 focus:ring-2 focus:ring-blue-100
+                                focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100
                                 hover:border-gray-300"
                             />
 
@@ -160,7 +160,7 @@ export default function SignInPage() {
                     <div className="text-right">
                         <Link
                             href="/forgot-password"
-                            className="text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                            className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline"
                         >
                             Forgot password?
                         </Link>
@@ -172,10 +172,10 @@ export default function SignInPage() {
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 
+                            className="flex-1 h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 
                             text-white font-semibold
                             hover:scale-[1.02] active:scale-[0.98]
-                            transition-all duration-200 shadow-md shadow-blue-200"
+                            transition-all duration-200 shadow-md shadow-emerald-200"
                         >
                             {loading ? "Signing in..." : (
                                 <>
@@ -223,7 +223,7 @@ export default function SignInPage() {
                     Don't have an account?{" "}
                     <Link
                         href="/register"
-                        className="text-blue-600 font-semibold hover:underline"
+                        className="text-emerald-600 font-semibold hover:underline"
                     >
                         Create account
                     </Link>
